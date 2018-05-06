@@ -13,6 +13,8 @@ protected:
 	virtual void execute() = 0;
 };
 
+struct da{ };
+
 class SyntaxAnalizer {
 public:
 	SyntaxAnalizer(istream& stream) :
