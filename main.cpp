@@ -47,54 +47,85 @@ private:
 	void ungetLex();
 
 	bool neadRead;
-	Lex cur;
+	Lex lex;
 	stack<Lex> expr;
 	LexAnalizer la;
 };
 
 void SyntaxAnalizer::Expression(){
-	bool running = true;
 	Pr();
 
 	getLex();
-	if (cur.type != LEX_PLUS && cur.type != LEX_MINUS)
-		running = false;
+	bool running = lex.type == LEX_PLUS || lex.type == LEX_MINUS;
 	ungetLex();
 
 	while (running) {
 		SumOp();
 		Pr();
+		getLex();
+		running = lex.type == LEX_PLUS || lex.type == LEX_MINUS;
+		ungetLex();
 	}
 }
 
 void SyntaxAnalizer::Pr() {
-	bool running = true;
 	Atom();
 
 	getLex();
-	if (cur.type != LEX_MUL && cur.type != LEX_DIV)
-		running = false;
+	bool running = lex.type == LEX_MUL || lex.type == LEX_DIV;
 	ungetLex();
 
 	while (running) {
 		PrOp();
 		Atom();
+		getLex();
+		running = lex.type == LEX_MUL || lex.type == LEX_DIV;
+		ungetLex();
 	}
 }
 
 void SyntaxAnalizer::SumOp() {
 	getLex();
+	switch(lex.type) {
+		case LEX_PLUS:
+			break;
+		case LEX_MINUS:
+			break;
+		default:
+			ungetLex();
+			break;
+	}
 }
 
 void SyntaxAnalizer::PrOp() {
 	getLex();
+	switch(lex.type) {
+		case LEX_MUL:
+			break;
+		case LEX_DIV:
+			break;
+		default:
+			ungetLex();
+			break;
+	}
 }
 
 void SyntaxAnalizer::Atom() {
 	getLex();
-	if (cur.type == LEX_OP_ROUND) {
-		Expression();
-		getLex(LEX_OP_ROUND);
+	switch(lex.type) {
+		case LEX_OP_ROUND:
+			Expression();
+			getLex(LEX_OP_ROUND);
+			break;
+
+		case LEX_ID:
+		case LEX_NUM:
+		case LEX_STRING:
+			break;
+
+		default:
+			throw lex;
+			break;
 	}
 }
 int main()
@@ -140,18 +171,18 @@ bool SyntaxAnalizer::getLex(LexType type) {
 
 	if (type == LEX_NULL) {
 		if (!exist) {/*
-			cur = Lex();
+			lex = Lex();
 			return false;*/
 			throw Lex();
 		}
-		cur = la.current();
+		lex = la.current();
 	}
 	else {
 		if (!exist)
 			throw "Unexpected end of file";
-		cur = la.current();
-		if (cur.type != type)
-			throw cur;
+		lex = la.current();
+		if (lex.type != type)
+			throw lex;
 	}
 	return true;
 }
@@ -166,14 +197,14 @@ void SyntaxAnalizer::Descriptions() {
 
 	while (running)	{
 		getLex();
-		switch (cur.type) {
+		switch (lex.type) {
 			case LEX_NULL:
 				throw "Unexpected end of file";
 				break;
 
 			case LEX_INT: case LEX_STR:
 				LexType t;
-				if (cur.type == LEX_INT)
+				if (lex.type == LEX_INT)
 					t = LEX_NUM;
 				else
 					t = LEX_STRING;
@@ -191,7 +222,7 @@ void SyntaxAnalizer::Descriptions() {
 void SyntaxAnalizer::ReadId(const LexType type) {
 	getLex(LEX_ID);
 	getLex();
-	switch(cur.type) {
+	switch(lex.type) {
 		case LEX_COMMA:
 			ReadId(type);
 			break;
@@ -205,7 +236,7 @@ void SyntaxAnalizer::ReadId(const LexType type) {
 			break;
 
 		default:
-			throw cur;
+			throw lex;
 	}
 }
 
@@ -213,7 +244,7 @@ void SyntaxAnalizer::ReadValue(const LexType type) {
 	getLex(type);
 	getLex();
 
-	switch (cur.type) {
+	switch (lex.type) {
 		case LEX_COMMA:
 			ReadId(type);
 			break;
@@ -222,7 +253,7 @@ void SyntaxAnalizer::ReadValue(const LexType type) {
 			break;
 
 		default:
-			throw cur;
+			throw lex;
 	}
 }
 
@@ -230,7 +261,7 @@ void SyntaxAnalizer::Operators() {
 	bool running = true;
 	while (running) {
 		getLex();
-		switch(cur.type) {
+		switch(lex.type) {
 			case LEX_OP_BRACE:
 				Operators();
 				getLex(LEX_CL_BRACE);
@@ -251,7 +282,7 @@ void SyntaxAnalizer::Operators() {
 
 void SyntaxAnalizer::Operator() {
 	getLex();
-	switch(cur.type) {
+	switch(lex.type) {
 		case LEX_READ:
 			ReadFunc();
 			break;
@@ -261,7 +292,7 @@ void SyntaxAnalizer::Operator() {
 		case LEX_ID:
 			break;
 		default:
-			throw cur;
+			throw lex;
 			break;
 	}
 }
@@ -278,7 +309,7 @@ void SyntaxAnalizer::WriteFunc() {
 	do {
 		Expression();
 		getLex();
-	} while (cur.type == LEX_COMMA);
+	} while (lex.type == LEX_COMMA);
 	ungetLex();
 	getLex(LEX_CL_ROUND);
 	getLex(LEX_SEMICOLON);
@@ -290,7 +321,7 @@ void SyntaxAnalizer::IfBlock() {
 	getLex(LEX_CL_ROUND);
 
 	getLex();
-	if (cur.type == LEX_OP_BRACE) {
+	if (lex.type == LEX_OP_BRACE) {
 		Operators();
 		getLex(LEX_CL_BRACE);
 	}
@@ -300,9 +331,9 @@ void SyntaxAnalizer::IfBlock() {
 	}
 
 	getLex();
-	if(cur.type == LEX_ELSE) {
+	if(lex.type == LEX_ELSE) {
 		getLex();
-		if (cur.type == LEX_OP_BRACE) {
+		if (lex.type == LEX_OP_BRACE) {
 			Operators();
 			getLex(LEX_CL_BRACE);
 		}
