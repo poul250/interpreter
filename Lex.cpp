@@ -67,7 +67,6 @@ void LexAnalizer::makeLex(LexType type) {
 
 bool LexAnalizer::moveNext() {
 	int ch = 0;
-	bool readCh = true;
 
 	if (!stream.good())
 		return false;
