@@ -130,7 +130,7 @@ void SyntaxAnalizer::Atom() {
 }
 int main()
 {
-	/*
+	
 	LexAnalizer la(cin);
 	try{
 		while (la.moveNext()) {
@@ -139,7 +139,8 @@ int main()
 	}
 	catch(const char *str) {
 		cout << str << endl;
-	}*/
+	}
+	/*
 	SyntaxAnalizer sa(cin);
 
 	try {
@@ -147,7 +148,7 @@ int main()
 	}
 	catch (Lex l) {
 		cout << l << endl;
-	}
+	}*/
 	return 0;
 }
 
