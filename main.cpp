@@ -13,15 +13,13 @@ protected:
 	virtual void execute() = 0;
 };
 
-struct da{ };
-
-class SyntaxAnalizer {
+class Inerpretator {
 public:
-	SyntaxAnalizer(istream& stream) :
+	Inerpretator(istream& stream) :
 			la(stream),
 			neadRead(true) {	}
 
-	void Start();
+	void Inerpretate();
 private:
 	//Program states
 	void Descriptions();
@@ -45,16 +43,16 @@ private:
 	void CmpOp();
 	void Atom();
 
+
 	bool getLex(LexType type = LEX_NULL);
 	void ungetLex();
 
 	bool neadRead;
 	Lex lex;
-	stack<Lex> expr;
 	LexAnalizer la;
 };
 
-void SyntaxAnalizer::Expression(){
+void Inerpretator::Expression(){
 	Pr();
 
 	getLex();
@@ -70,7 +68,7 @@ void SyntaxAnalizer::Expression(){
 	}
 }
 
-void SyntaxAnalizer::Pr() {
+void Inerpretator::Pr() {
 	Atom();
 
 	getLex();
@@ -86,7 +84,7 @@ void SyntaxAnalizer::Pr() {
 	}
 }
 
-void SyntaxAnalizer::SumOp() {
+void Inerpretator::SumOp() {
 	getLex();
 	switch(lex.type) {
 		case LEX_PLUS:
@@ -99,7 +97,7 @@ void SyntaxAnalizer::SumOp() {
 	}
 }
 
-void SyntaxAnalizer::PrOp() {
+void Inerpretator::PrOp() {
 	getLex();
 	switch(lex.type) {
 		case LEX_MUL:
@@ -112,7 +110,7 @@ void SyntaxAnalizer::PrOp() {
 	}
 }
 
-void SyntaxAnalizer::Atom() {
+void Inerpretator::Atom() {
 	getLex();
 	switch(lex.type) {
 		case LEX_OP_ROUND:
@@ -132,7 +130,6 @@ void SyntaxAnalizer::Atom() {
 }
 int main()
 {
-	
 	LexAnalizer la(cin);
 	try{
 		while (la.moveNext()) {
@@ -140,32 +137,23 @@ int main()
 		}
 	}
 	catch(const char *str) {
-		cout << str << endl;
+		cout << "Line " << la.getLine() << ": " << str << endl;
 	}
 	/*
-	SyntaxAnalizer sa(cin);
+	Inerpretator sa(cin);
 
 	try {
-		sa.Start();
+		sa.Inerpretate();
 	}
 	catch (Lex l) {
 		cout << l << endl;
-	}*/
+	}
+	catch (const char*) {}
+	*/
 	return 0;
 }
 
-
-void SyntaxAnalizer::Start() {
-	getLex(LEX_PROGRAM);
-	getLex(LEX_OP_BRACE);
-
-	Descriptions();
-	Operators();
-
-	getLex(LEX_CL_BRACE);
-}
-
-bool SyntaxAnalizer::getLex(LexType type) {
+bool Inerpretator::getLex(LexType type) {
 	static bool exist = true;
 	if (neadRead)
 		exist = la.moveNext();
@@ -173,11 +161,8 @@ bool SyntaxAnalizer::getLex(LexType type) {
 		neadRead = true;
 
 	if (type == LEX_NULL) {
-		if (!exist) {/*
-			lex = Lex();
-			return false;*/
+		if (!exist)
 			throw Lex();
-		}
 		lex = la.current();
 	}
 	else {
@@ -190,30 +175,33 @@ bool SyntaxAnalizer::getLex(LexType type) {
 	return true;
 }
 
-void SyntaxAnalizer::ungetLex() {
+void Inerpretator::ungetLex() {
 	neadRead = false;
 }
 
+void Inerpretator::Inerpretate() {
+	getLex(LEX_PROGRAM);
+	getLex(LEX_OP_BRACE);
 
-void SyntaxAnalizer::Descriptions() {
+	Descriptions();
+	Operators();
+
+	getLex(LEX_CL_BRACE);
+}
+
+void Inerpretator::Descriptions() {
 	bool running = true;
 
 	while (running)	{
 		getLex();
 		switch (lex.type) {
-			case LEX_NULL:
-				throw "Unexpected end of file";
-				break;
-
 			case LEX_INT: case LEX_STR:
-				LexType t;
 				if (lex.type == LEX_INT)
-					t = LEX_NUM;
+					ReadId(LEX_NUM);
 				else
-					t = LEX_STRING;
-
-				ReadId(t);
+					ReadId(LEX_STRING);
 				break;
+
 			default:
 				ungetLex();
 				running = false;
@@ -222,7 +210,7 @@ void SyntaxAnalizer::Descriptions() {
 	}
 }
 
-void SyntaxAnalizer::ReadId(const LexType type) {
+void Inerpretator::ReadId(const LexType type) {
 	getLex(LEX_ID);
 	getLex();
 	switch(lex.type) {
@@ -235,7 +223,6 @@ void SyntaxAnalizer::ReadId(const LexType type) {
 			break;
 
 		case LEX_SEMICOLON:
-			Descriptions();
 			break;
 
 		default:
@@ -243,7 +230,12 @@ void SyntaxAnalizer::ReadId(const LexType type) {
 	}
 }
 
-void SyntaxAnalizer::ReadValue(const LexType type) {
+void Inerpretator::ReadValue(const LexType type) {
+	if (type == LEX_NUM) {
+		getLex();
+		if (lex.type != LEX_PLUS && lex.type != LEX_MINUS)
+			ungetLex();
+	}
 	getLex(type);
 	getLex();
 
@@ -260,7 +252,7 @@ void SyntaxAnalizer::ReadValue(const LexType type) {
 	}
 }
 
-void SyntaxAnalizer::Operators() {
+void Inerpretator::Operators() {
 	bool running = true;
 	while (running) {
 		getLex();
@@ -283,7 +275,7 @@ void SyntaxAnalizer::Operators() {
 	}
 }
 
-void SyntaxAnalizer::Operator() {
+void Inerpretator::Operator() {
 	getLex();
 	switch(lex.type) {
 		case LEX_READ:
@@ -300,14 +292,14 @@ void SyntaxAnalizer::Operator() {
 	}
 }
 
-void SyntaxAnalizer::ReadFunc() {
+void Inerpretator::ReadFunc() {
 	getLex(LEX_OP_ROUND);
 	getLex(LEX_ID);
 	getLex(LEX_CL_ROUND);
 	getLex(LEX_SEMICOLON);
 }
 
-void SyntaxAnalizer::WriteFunc() {
+void Inerpretator::WriteFunc() {
 	getLex(LEX_OP_ROUND);
 	do {
 		Expression();
@@ -318,7 +310,7 @@ void SyntaxAnalizer::WriteFunc() {
 	getLex(LEX_SEMICOLON);
 }
 
-void SyntaxAnalizer::IfBlock() {
+void Inerpretator::IfBlock() {
 	getLex(LEX_OP_ROUND);
 	Expression();
 	getLex(LEX_CL_ROUND);

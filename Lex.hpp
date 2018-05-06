@@ -39,6 +39,7 @@ public:
 	const Lex& current() const {
 		return lex;
 	}
+	int getLine() {return line;}
 
 private:
 	typedef bool (LexAnalizer::*State) (int c);
@@ -49,8 +50,8 @@ private:
 	bool ReadNum (int c);
 	bool ReadString (int c);
 	bool Shielding(int c);
-
-
+	bool Comment(int c);
+	bool BigComment(int c);
 	void makeLex(LexType);
 
 	string buf;
@@ -58,5 +59,6 @@ private:
 	State state;
 	Lex lex;
 	map<string, LexType> TW;
+	int line;
 };
 }//namespace

@@ -42,7 +42,11 @@ ostream& operator<< (ostream& stream, Lex lex) {
 
 Lex::Lex(const LexType type, string str) : type(type), str(str) { }
 
-LexAnalizer::LexAnalizer(istream& stream) : stream(stream), state(nullptr) {
+LexAnalizer::LexAnalizer(istream& stream) :
+		stream(stream),
+		state(nullptr),
+		line(1)
+{
 	TW[ string("program")] = LEX_PROGRAM;
 	TW[ string("read")   ] = LEX_READ;
 	TW[ string("write")  ] = LEX_WRITE;
@@ -78,6 +82,11 @@ bool LexAnalizer::moveNext() {
 bool LexAnalizer::FirstSym(int c) {
 	buf.push_back(c);
 	switch (c) {
+		case '\n':
+			buf.pop_back();
+			++line;
+			break;
+
 		case '\"':
 			state = &LexAnalizer::ReadString;
 			return true;
@@ -119,14 +128,11 @@ bool LexAnalizer::FirstSym(int c) {
 			makeLex(LEX_MUL);
 			return false;
 
-		case '/':
-			makeLex(LEX_DIV);
-			return false;
-
 		case '<':
 		case '>':
 		case '=':
 		case '!':
+		case '/':
 			state = &LexAnalizer::ComplexOperation;
 			return true;
 
@@ -156,7 +162,23 @@ bool LexAnalizer::FirstSym(int c) {
 
 bool LexAnalizer::ComplexOperation(int c) {
 	const char ch = buf.back();
-	if (c == '=') {
+	if (ch == '/') {
+		if (c == '/') {
+			buf.pop_back();
+			state = &LexAnalizer::Comment;
+			return true;
+		}
+		else if (c == '*') {
+			buf.pop_back();
+			state = &LexAnalizer::BigComment;
+			return true;
+		}
+		else {
+			stream.unget();
+			makeLex(LEX_DIV);
+		}
+	}
+	else if (c == '=') {
 		buf.push_back('=');
 		switch (ch) {
 			case '<':
@@ -197,6 +219,25 @@ bool LexAnalizer::ComplexOperation(int c) {
 		}
 	}
 	return false;
+}
+
+bool LexAnalizer::Comment(int c) {
+	if (c == '\n')
+		state = &LexAnalizer::FirstSym;
+	return true;
+}
+
+bool LexAnalizer::BigComment(int c) {
+	static bool lastStar = false;
+	if (c == '*')
+		lastStar = true;
+	else if (c == '/' && lastStar)
+		state = &LexAnalizer::FirstSym;
+	else if (c == EOF)
+		throw "Unexpected end of file";
+	else
+		lastStar = false;
+	return true;
 }
 
 bool LexAnalizer::ReadId(int c) {
