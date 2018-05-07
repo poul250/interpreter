@@ -13,9 +13,9 @@ protected:
 	virtual void execute() = 0;
 };
 
-class Inerpretator {
+class Interpretator {
 public:
-	Inerpretator(istream& stream)
+	Interpretator(istream& stream)
 		: la(stream)
 		, neadRead(true) {	}
 
@@ -33,17 +33,23 @@ private:
 
 	//Expression states
 	void Expression();
-	void Pr();
-	void SumOp();
-	void PrOp();
+	void Assign();
 	void AssignOp();
-	void AndOp();
+	void Or();
 	void OrOp();
+	void And();
+	void AndOp();
+	void Relation();
+	void RelationOp();
+	void Sum();
+	void SumOp();
+	void Pr();
+	void PrOp();
 	void NotOp();
-	void CmpOp();
 	void Atom();
 
 	bool getLex(LexType type = LEX_NULL);
+	void inline checkLex(LexType);
 	void ungetLex() { neadRead = false; }
 
 	bool neadRead;
@@ -51,63 +57,95 @@ private:
 	LexAnalizer la;
 };
 
-void Inerpretator::Expression(){
-	Pr();
+void Interpretator::Expression() {
+	Or();
+	while (lex.type == LEX_ASSIGN) {
+		AssignOp();
+		Or();
+	}
+}
+
+void Interpretator::AssignOp() {
+	switch(lex.type) {
+		case LEX_ASSIGN: getLex(); break;
+	}
+}
+
+void Interpretator::Or() {
+	And();
+	while (lex.type == LEX_OR) {
+		OrOp();
+		And();
+	}
+}
+
+void Interpretator::OrOp() {
 	getLex();
-	bool running = lex.type == LEX_PLUS || lex.type == LEX_MINUS;
-	ungetLex();
-	while (running) {
+}
+
+void Interpretator::And() {
+	Relation();
+	while (lex.type == LEX_AND) {
+		AndOp();
+		Relation();
+	}
+}
+
+void Interpretator::AndOp() {
+	getLex();
+}
+
+void Interpretator::Relation() {
+	Sum();
+	while (lex.type == LEX_LESS || lex.type == LEX_GREATER || lex.type == LEX_LE ||
+		lex.type == LEX_GE || lex.type == LEX_EQ || lex.type == LEX_NE)
+	{
+		RelationOp();
+		Sum();
+	}
+}
+
+void Interpretator::RelationOp() {
+	switch (lex.type) {
+		case LEX_LESS:
+		case LEX_GREATER:
+		case LEX_EQ:
+		case LEX_NE:
+		case LEX_LE:
+		case LEX_GE:
+			getLex();
+			break;
+	}
+}
+
+void Interpretator::Sum() {
+	Pr();
+	while (lex.type == LEX_PLUS || lex.type == LEX_MINUS) {
 		SumOp();
 		Pr();
-		getLex();
-		running = lex.type == LEX_PLUS || lex.type == LEX_MINUS;
-		ungetLex();
 	}
 }
 
-void Inerpretator::Pr() {
-	Atom();
-	getLex();
-	bool running = lex.type == LEX_MUL || lex.type == LEX_DIV;
-	ungetLex();
+void Interpretator::SumOp() {
+	switch(lex.type) {
+		case LEX_PLUS:  getLex(); break;
+		case LEX_MINUS: getLex(); break;
+	}
+}
 
-	while (running) {
+void Interpretator::Pr() {
+	Atom();
+	while (lex.type == LEX_MUL || lex.type == LEX_DIV) {
 		PrOp();
 		Atom();
-		getLex();
-		running = lex.type == LEX_MUL || lex.type == LEX_DIV;
-		ungetLex();
 	}
 }
 
-void Inerpretator::SumOp() {
+void Interpretator::PrOp() {
 	getLex();
-	switch(lex.type) {
-		case LEX_PLUS:
-			break;
-		case LEX_MINUS:
-			break;
-		default:
-			ungetLex();
-			break;
-	}
 }
 
-void Inerpretator::PrOp() {
-	getLex();
-	switch(lex.type) {
-		case LEX_MUL:
-			break;
-		case LEX_DIV:
-			break;
-		default:
-			ungetLex();
-			break;
-	}
-}
-
-void Inerpretator::Atom() {
-	getLex();
+void Interpretator::Atom() {
 	switch(lex.type) {
 		case LEX_OP_ROUND:
 			Expression();
@@ -116,14 +154,17 @@ void Inerpretator::Atom() {
 		case LEX_ID:
 		case LEX_NUM:
 		case LEX_STRING:
+			getLex();
 			break;
 		default:
 			throw lex;
 			break;
 	}
 }
+
 int main()
 {
+	/*
 	LexAnalizer la(cin);
 	try{
 		while (la.moveNext()) {
@@ -133,8 +174,8 @@ int main()
 	catch(const char *str) {
 		cout << "Line " << la.getLine() << ": " << str << endl;
 	}
-	/*
-	Inerpretator sa(cin);
+	*/
+	Interpretator sa(cin);
 
 	try {
 		sa.Inerpretate();
@@ -143,11 +184,11 @@ int main()
 		cout << l << endl;
 	}
 	catch (const char*) {}
-	*/
+
 	return 0;
 }
 
-bool Inerpretator::getLex(LexType type) {
+bool Interpretator::getLex(LexType type) {
 	static bool exist = true;
 	if (neadRead)
 		exist = la.moveNext();
@@ -168,9 +209,15 @@ bool Inerpretator::getLex(LexType type) {
 	return true;
 }
 
-void Inerpretator::Inerpretate() {
+void inline Interpretator::checkLex(LexType type) {
+	if (lex.type != type)
+		throw lex;
+}
+
+void Interpretator::Inerpretate() {
 	getLex(LEX_PROGRAM);
 	getLex(LEX_OP_BRACE);
+	getLex();
 
 	Descriptions();
 	Operators();
@@ -178,23 +225,17 @@ void Inerpretator::Inerpretate() {
 	getLex(LEX_CL_BRACE);
 }
 
-void Inerpretator::Descriptions() {
-	bool running = true;
-
-	while (running)	{
-		getLex();
+void Interpretator::Descriptions() {
+	while (lex.type == LEX_INT || lex.type == LEX_STR)	{
 		switch (lex.type) {
 			case LEX_INT: ReadId(LEX_NUM);    break;
 			case LEX_STR: ReadId(LEX_STRING); break;
-			default:
-				ungetLex();
-				running = false;
-				break;
 		}
+		getLex();
 	}
 }
 
-void Inerpretator::ReadId(const LexType type) {
+void Interpretator::ReadId(const LexType type) {
 	getLex(LEX_ID);
 	getLex();
 	switch(lex.type) {
@@ -205,7 +246,7 @@ void Inerpretator::ReadId(const LexType type) {
 	}
 }
 
-void Inerpretator::ReadValue(const LexType type) {
+void Interpretator::ReadValue(const LexType type) {
 	if (type == LEX_NUM) {
 		getLex();
 		if (lex.type != LEX_PLUS && lex.type != LEX_MINUS)
@@ -221,80 +262,74 @@ void Inerpretator::ReadValue(const LexType type) {
 	}
 }
 
-void Inerpretator::Operators() {
-	bool running = true;
-	while (running) {
-		getLex();
+void Interpretator::Operators() {
+	while (lex.type != LEX_CL_BRACE) {
 		switch(lex.type) {
 			case LEX_OP_BRACE:
 				Operators();
-				getLex(LEX_CL_BRACE);
-				break;
-			case LEX_CL_BRACE:
-				ungetLex();
-				running = false;
+				checkLex(LEX_CL_BRACE);
+				getLex();
 				break;
 			default:
-				ungetLex();
 				Operator();
 				break;
 		}
 	}
 }
 
-void Inerpretator::Operator() {
-	getLex();
+void Interpretator::Operator() {
 	switch(lex.type) {
-		case LEX_READ:  ReadFunc();  break;
-		case LEX_WRITE: WriteFunc(); break;
-		case LEX_ID:                 break;
-		default:        throw lex;   break;
+		case LEX_READ:  ReadFunc();   break;
+		case LEX_WRITE: WriteFunc();  break;
+		case LEX_IF:    IfBlock();    break;
+		case LEX_ID:    Expression(); break;
+		default:        throw lex;    break;
 	}
 }
 
-void Inerpretator::ReadFunc() {
+void Interpretator::ReadFunc() {
 	getLex(LEX_OP_ROUND);
 	getLex(LEX_ID);
 	getLex(LEX_CL_ROUND);
 	getLex(LEX_SEMICOLON);
+	getLex();
 }
 
-void Inerpretator::WriteFunc() {
+void Interpretator::WriteFunc() {
 	getLex(LEX_OP_ROUND);
+	getLex();
 	do {
 		Expression();
-		getLex();
 	} while (lex.type == LEX_COMMA);
 	ungetLex();
 	getLex(LEX_CL_ROUND);
 	getLex(LEX_SEMICOLON);
+	getLex();
 }
 
-void Inerpretator::IfBlock() {
+void Interpretator::IfBlock() {
 	getLex(LEX_OP_ROUND);
 	Expression();
-	getLex(LEX_CL_ROUND);
+	checkLex(LEX_CL_ROUND);
 
 	getLex();
 	if (lex.type == LEX_OP_BRACE) {
+		getLex();
 		Operators();
-		getLex(LEX_CL_BRACE);
+		checkLex(LEX_CL_BRACE);
 	} else {
-		ungetLex();
 		Operator();
 	}
 
-	getLex();
 	if(lex.type == LEX_ELSE) {
 		getLex();
 		if (lex.type == LEX_OP_BRACE) {
+			getLex();
 			Operators();
-			getLex(LEX_CL_BRACE);
+			checkLex(LEX_CL_BRACE);
+			getLex();
 		} else {
-			ungetLex();
 			Operator();
 		}
-	} else {
-		ungetLex();
 	}
 }
