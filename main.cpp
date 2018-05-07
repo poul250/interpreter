@@ -43,9 +43,8 @@ private:
 	void CmpOp();
 	void Atom();
 
-
 	bool getLex(LexType type = LEX_NULL);
-	void ungetLex();
+	void ungetLex() { neadRead = false; }
 
 	bool neadRead;
 	Lex lex;
@@ -54,11 +53,9 @@ private:
 
 void Inerpretator::Expression(){
 	Pr();
-
 	getLex();
 	bool running = lex.type == LEX_PLUS || lex.type == LEX_MINUS;
 	ungetLex();
-
 	while (running) {
 		SumOp();
 		Pr();
@@ -70,7 +67,6 @@ void Inerpretator::Expression(){
 
 void Inerpretator::Pr() {
 	Atom();
-
 	getLex();
 	bool running = lex.type == LEX_MUL || lex.type == LEX_DIV;
 	ungetLex();
@@ -117,12 +113,10 @@ void Inerpretator::Atom() {
 			Expression();
 			getLex(LEX_OP_ROUND);
 			break;
-
 		case LEX_ID:
 		case LEX_NUM:
 		case LEX_STRING:
 			break;
-
 		default:
 			throw lex;
 			break;
@@ -164,8 +158,7 @@ bool Inerpretator::getLex(LexType type) {
 		if (!exist)
 			throw Lex();
 		lex = la.current();
-	}
-	else {
+	} else {
 		if (!exist)
 			throw "Unexpected end of file";
 		lex = la.current();
@@ -173,10 +166,6 @@ bool Inerpretator::getLex(LexType type) {
 			throw lex;
 	}
 	return true;
-}
-
-void Inerpretator::ungetLex() {
-	neadRead = false;
 }
 
 void Inerpretator::Inerpretate() {
@@ -195,13 +184,8 @@ void Inerpretator::Descriptions() {
 	while (running)	{
 		getLex();
 		switch (lex.type) {
-			case LEX_INT: case LEX_STR:
-				if (lex.type == LEX_INT)
-					ReadId(LEX_NUM);
-				else
-					ReadId(LEX_STRING);
-				break;
-
+			case LEX_INT: ReadId(LEX_NUM);    break;
+			case LEX_STR: ReadId(LEX_STRING); break;
 			default:
 				ungetLex();
 				running = false;
@@ -214,19 +198,10 @@ void Inerpretator::ReadId(const LexType type) {
 	getLex(LEX_ID);
 	getLex();
 	switch(lex.type) {
-		case LEX_COMMA:
-			ReadId(type);
-			break;
-
-		case LEX_ASSIGN:
-			ReadValue(type);
-			break;
-
-		case LEX_SEMICOLON:
-			break;
-
-		default:
-			throw lex;
+		case LEX_COMMA:  ReadId(type);    break;
+		case LEX_ASSIGN: ReadValue(type); break;
+		case LEX_SEMICOLON:               break;
+		default:         throw lex;       break;
 	}
 }
 
@@ -240,15 +215,9 @@ void Inerpretator::ReadValue(const LexType type) {
 	getLex();
 
 	switch (lex.type) {
-		case LEX_COMMA:
-			ReadId(type);
-			break;
-
-		case LEX_SEMICOLON:
-			break;
-
-		default:
-			throw lex;
+		case LEX_COMMA: ReadId(type); break;
+		case LEX_SEMICOLON:           break;
+		default:        throw lex;    break;
 	}
 }
 
@@ -261,12 +230,10 @@ void Inerpretator::Operators() {
 				Operators();
 				getLex(LEX_CL_BRACE);
 				break;
-
 			case LEX_CL_BRACE:
 				ungetLex();
 				running = false;
 				break;
-
 			default:
 				ungetLex();
 				Operator();
@@ -278,17 +245,10 @@ void Inerpretator::Operators() {
 void Inerpretator::Operator() {
 	getLex();
 	switch(lex.type) {
-		case LEX_READ:
-			ReadFunc();
-			break;
-		case LEX_WRITE:
-			WriteFunc();
-			break;
-		case LEX_ID:
-			break;
-		default:
-			throw lex;
-			break;
+		case LEX_READ:  ReadFunc();  break;
+		case LEX_WRITE: WriteFunc(); break;
+		case LEX_ID:                 break;
+		default:        throw lex;   break;
 	}
 }
 
@@ -319,8 +279,7 @@ void Inerpretator::IfBlock() {
 	if (lex.type == LEX_OP_BRACE) {
 		Operators();
 		getLex(LEX_CL_BRACE);
-	}
-	else {
+	} else {
 		ungetLex();
 		Operator();
 	}
@@ -331,13 +290,11 @@ void Inerpretator::IfBlock() {
 		if (lex.type == LEX_OP_BRACE) {
 			Operators();
 			getLex(LEX_CL_BRACE);
-		}
-		else {
+		} else {
 			ungetLex();
 			Operator();
 		}
-	}
-	else {
+	} else {
 		ungetLex();
 	}
 }
