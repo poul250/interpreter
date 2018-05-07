@@ -15,9 +15,9 @@ protected:
 
 class Inerpretator {
 public:
-	Inerpretator(istream& stream) :
-			la(stream),
-			neadRead(true) {	}
+	Inerpretator(istream& stream)
+		: la(stream)
+		, neadRead(true) {	}
 
 	void Inerpretate();
 private:

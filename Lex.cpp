@@ -2,7 +2,7 @@
 namespace Pawka {
 
 ostream& operator<< (ostream& stream, Lex lex) {
-	static const char* names[] { nullptr };
+	static const char* names[31] { nullptr };
     if( names[0] == nullptr ) {
 		names[0]  = "LEX_NULL      ";
 		names[1]  = "LEX_ID        ";
@@ -42,28 +42,24 @@ ostream& operator<< (ostream& stream, Lex lex) {
 
 Lex::Lex(const LexType type, string str) : type(type), str(str) { }
 
-LexAnalizer::LexAnalizer(istream& stream) :
-		stream(stream),
-		state(nullptr),
-		line(1)
+LexAnalizer::LexAnalizer(istream& stream)
+	: stream(stream)
+	, state(nullptr)
+	, line(1)
 {
-	TW[ string("program")] = LEX_PROGRAM;
-	TW[ string("read")   ] = LEX_READ;
-	TW[ string("write")  ] = LEX_WRITE;
-	TW[ string("if")     ] = LEX_IF;
-	TW[ string("else")   ] = LEX_ELSE;
-	TW[ string("not")    ] = LEX_NOT;
-	TW[ string("and")    ] = LEX_AND;
-	TW[ string("or")     ] = LEX_OR;
-	TW[ string("int")    ] = LEX_INT;
-	TW[ string("string") ] = LEX_STR;
+	TW[string("program")] = LEX_PROGRAM;
+	TW[string("read")   ] = LEX_READ;
+	TW[string("write")  ] = LEX_WRITE;
+	TW[string("if")     ] = LEX_IF;
+	TW[string("else")   ] = LEX_ELSE;
+	TW[string("not")    ] = LEX_NOT;
+	TW[string("and")    ] = LEX_AND;
+	TW[string("or")     ] = LEX_OR;
+	TW[string("int")    ] = LEX_INT;
+	TW[string("string") ] = LEX_STR;
 }
 
 LexAnalizer::~LexAnalizer() {  }
-
-void LexAnalizer::makeLex(LexType type) {
-	lex = Lex(type, buf);
-}
 
 bool LexAnalizer::moveNext() {
 	int ch = 0;
@@ -73,7 +69,8 @@ bool LexAnalizer::moveNext() {
 
 	buf.clear();
 	state = &LexAnalizer::FirstSym;
-	while ( ( this->*state )( stream.get() ) ) { }
+	while ((this->*state)(stream.get()))
+	{ }
 
 	return true;
 }
@@ -81,51 +78,16 @@ bool LexAnalizer::moveNext() {
 bool LexAnalizer::FirstSym(int c) {
 	buf.push_back(c);
 	switch (c) {
-		case '\n':
-			buf.pop_back();
-			++line;
-			break;
-
-		case '\"':
-			state = &LexAnalizer::ReadString;
-			return true;
-			break;
-
-		case '{':
-			makeLex(LEX_OP_BRACE);
-			return false;
-
-		case '}':
-			makeLex(LEX_CL_BRACE);
-			return false;
-
-		case '(':
-			makeLex(LEX_OP_ROUND);
-			return false;
-
-		case ')':
-			makeLex(LEX_CL_ROUND);
-			return false;
-
-		case ';':
-			makeLex(LEX_SEMICOLON);
-			return false;
-
-		case ',':
-			makeLex(LEX_COMMA);
-			return false;
-
-		case '+':
-			makeLex(LEX_PLUS);
-			return false;
-
-		case '-':
-			makeLex(LEX_MINUS);
-			return false;
-
-		case '*':
-			makeLex(LEX_MUL);
-			return false;
+		case '{': makeLex(LEX_OP_BRACE);  return false;
+		case '}': makeLex(LEX_CL_BRACE);  return false;
+		case '(': makeLex(LEX_OP_ROUND);  return false;
+		case ')': makeLex(LEX_CL_ROUND);  return false;
+		case ';': makeLex(LEX_SEMICOLON); return false;
+		case ',': makeLex(LEX_COMMA);     return false;
+		case '+': makeLex(LEX_PLUS);      return false;
+		case '-': makeLex(LEX_MINUS);     return false;
+		case '*': makeLex(LEX_MUL);       return false;
+		case EOF: makeLex(LEX_NULL);      return false;
 
 		case '<':
 		case '>':
@@ -134,25 +96,23 @@ bool LexAnalizer::FirstSym(int c) {
 		case '/':
 			state = &LexAnalizer::ComplexOperation;
 			return true;
-
-		case EOF:
-			makeLex(LEX_NULL);
-			return false;
+		case '\"':
+			state = &LexAnalizer::ReadString;
+			return true;
 
 		default:
 			if (isspace(c)) {
 				buf.pop_back();
+				if (c == '\n')
+					++line;
 				return true;
-			}
-			else if (isalpha(c)) {
+			} else if (isalpha(c)) {
 				state = &LexAnalizer::ReadId;
 				return true;
-			}
-			else if (isdigit(c)) {
+			} else if (isdigit(c)) {
 				state = &LexAnalizer::ReadNum;
 				return true;
-			}
-			else {
+			} else {
 				throw "Unexpected sym";
 			}
 			break;
@@ -161,62 +121,38 @@ bool LexAnalizer::FirstSym(int c) {
 
 bool LexAnalizer::ComplexOperation(int c) {
 	const char ch = buf.back();
+
 	if (ch == '/') {
 		if (c == '/') {
 			buf.pop_back();
 			state = &LexAnalizer::Comment;
 			return true;
-		}
-		else if (c == '*') {
+		} else if (c == '*') {
 			buf.pop_back();
 			state = &LexAnalizer::BigComment;
 			return true;
-		}
-		else {
+		} else {
 			stream.unget();
 			makeLex(LEX_DIV);
 		}
-	}
-	else if (c == '=') {
+	} else if (c == '=') {
 		buf.push_back('=');
 		switch (ch) {
-			case '<':
-				makeLex(LEX_LE);
-				break;
-
-			case '>':
-				makeLex(LEX_GE);
-				break;
-
-			case '=':
-				makeLex(LEX_EQ);
-				break;
-
-			case '!':
-				makeLex(LEX_NE);
-				break;
+			case '<': makeLex(LEX_LE); break;
+			case '>': makeLex(LEX_GE); break;
+			case '=': makeLex(LEX_EQ); break;
+			case '!': makeLex(LEX_NE); break;
 		}
-	}
-	else {
+	} else {
 		stream.unget();
 		switch (ch) {
-			case '<':
-				makeLex(LEX_LESS);
-				break;
-
-			case '>':
-				makeLex(LEX_GREATER);
-				break;
-
-			case '=':
-				makeLex(LEX_ASSIGN);
-				break;
-
-			case '!':
-				throw "Unexpected symbol";
-				break;
+			case '<': makeLex(LEX_LESS);    break;
+			case '>': makeLex(LEX_GREATER); break;
+			case '=': makeLex(LEX_ASSIGN);  break;
+			case '!': throw "Unexpected symbol";break;
 		}
 	}
+
 	return false;
 }
 
@@ -243,8 +179,7 @@ bool LexAnalizer::ReadId(int c) {
 	if (isalpha(c) || isdigit(c)) {
 		buf.push_back(c);
 		return true;
-	}
-	else {
+	} else {
 		if (TW.count(buf) > 0)
 			makeLex(TW[buf]);
 		else
@@ -259,8 +194,7 @@ bool LexAnalizer::ReadNum(int c) {
 	if (isdigit(c)) {
 		buf.push_back(c);
 		return true;
-	}
-	else {
+	} else {
 		makeLex(LexType::LEX_NUM);
 		stream.unget();
 	}
@@ -270,49 +204,29 @@ bool LexAnalizer::ReadNum(int c) {
 
 bool LexAnalizer::ReadString(int c) {
 	switch(c) {
-	case '\\':
-		state = &LexAnalizer::Shielding;
-		return true;
-
-	case '\"':
-		buf.push_back('\"');
-		makeLex(LEX_STRING);
-		return false;
-
-	case EOF:
-		throw "Unexpected end of file";
-
-	default:
-		buf.push_back(c);
-		return true;
+		case '\\':
+			state = &LexAnalizer::Shielding;
+			return true;
+		case '\"':
+			buf.push_back('\"');
+			makeLex(LEX_STRING);
+			return false;
+		case EOF:
+			throw "Unexpected end of file";
+		default:
+			buf.push_back(c);
+			return true;
 	}
 }
 
 bool LexAnalizer::Shielding(int c) {
 	switch (c) {
-	case 'n':
-		buf.push_back('\n');
-		break;
-
-	case 't':
-		buf.push_back('\t');
-		break;
-
-	case '\\':
-		buf.push_back('\\');
-		break;
-
-	case '\"':
-		buf.push_back('\"');
-		break;
-
-	case EOF:
-		throw "Unexpected end of file";
-		break;
-
-	default:
-		throw "Bed shielding";
-		break;
+		case 'n':  buf.push_back('\n'); break;
+		case 't':  buf.push_back('\t'); break;
+		case '\\': buf.push_back('\\'); break;
+		case '\"': buf.push_back('\"'); break;
+		case EOF:  throw "Unexpected end of file"; break;
+		default:   throw "Bed shielding"; break;
 	}
 
 	state = &LexAnalizer::ReadString;

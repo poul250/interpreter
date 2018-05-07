@@ -36,10 +36,8 @@ public:
 	~LexAnalizer();
 
 	bool moveNext();
-	const Lex& current() const {
-		return lex;
-	}
-	int getLine() {return line;}
+	const Lex& current() const { return lex; }
+	int getLine() { return line; }
 
 private:
 	typedef bool (LexAnalizer::*State) (int c);
@@ -52,7 +50,8 @@ private:
 	bool Shielding(int c);
 	bool Comment(int c);
 	bool BigComment(int c);
-	void makeLex(LexType);
+
+	void makeLex(LexType type) { lex = Lex(type, buf); };
 
 	string buf;
 	istream& stream;
