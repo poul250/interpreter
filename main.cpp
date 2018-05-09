@@ -13,30 +13,32 @@ protected:
 	virtual void execute() = 0;
 };
 
-template <class T> struct Ident {
-	Ident();
-
-	LexType type;
-	bool assign;
-	T value;
-};
-
-template <class T> Ident<T>::Ident()
-	: assign(false)
-{
-
-}
-
 class Interpretator {
 public:
 	Interpretator(istream& stream);
 
 	void Inerpretate();
 private:
+	struct Ident {
+		Ident(const string& src)
+			: assign(false)
+			, type(LEX_NULL)
+			, name(src)
+		{	}
+		Ident(const Ident& src)
+			: assign(src.assign)
+			, type(src.type)
+			, name(src.name)
+		{	}
+
+		string name;
+		LexType type;
+		bool assign;
+	};
 	//Program states
 	void Descriptions();
-	void ReadId(const LexType);
-	void ReadValue(const LexType);
+	void ReadId(LexType);
+	void ReadValue(const string&, LexType);
 	void Operators();
 	void Operator();
 	void IfBlock();
@@ -53,29 +55,38 @@ private:
 	void And();
 	void AndOp();
 	void Relation();
-	void RelationOp();
+	void RelationOp(LexType);
 	void Sum();
-	void SumOp();
+	void SumOp(LexType);
 	void Pr();
-	void PrOp();
-	void NotOp();
+	void PrOp(LexType);
+	void Not();
+	void NotOp(LexType);
 	void Atom();
 
+	bool inline declared(const string&);
 	LexType getLex(LexType type = LEX_NULL);
 	void inline checkLex(LexType);
+	int strToInt(const string&);
 
 	LexAnalizer la;
 	bool neadRead;
 	Lex lex;
 
-	map <string, Ident<int>> integers;
-	map <string, Ident<string>> strings;
+	map<string, Ident*> vars;
+	map<string, int> integers;
+	map<string, string> strings;
+	stack<LexType> st;
 };
 
 Interpretator::Interpretator(istream& stream)
 	: la(stream)
 	, neadRead(true)
 {	}
+
+bool inline Interpretator::declared(const string& name) {
+	return vars.count(name) > 0;
+}
 
 LexType Interpretator::getLex(LexType type) {
 	if (neadRead) {
@@ -86,13 +97,26 @@ LexType Interpretator::getLex(LexType type) {
 	} else {
 		neadRead = true;
 	}
-	cout << lex << endl;
 	return lex.type;
 }
 
 void inline Interpretator::checkLex(LexType type) {
 	if (lex.type != type)
 		throw lex;
+}
+
+int Interpretator::strToInt(const string& src) {
+	int x = 0;
+	int sign = 1;
+	int start = 0;
+	if (src[0] == '+' || src[0] == '-') {
+		start = 1;
+		sign = src[0] == '+' ? 1 : -1;
+	}
+	for (int i = start; i < src.size(); ++i) {
+		x = x * 10 + src[i] - '0';
+	}
+	return x * sign;
 }
 
 void Interpretator::Inerpretate() {
@@ -111,6 +135,8 @@ void Interpretator::Inerpretate() {
 		else
 			cout << "Error: line " << la.getLine() <<
 				", Unexpected lexeme: " << endl << lex << endl;
+	} catch (string s) {
+		cout << "Error: Line " << la.getLine() << ", " << s << endl;
 	}
 }
 
@@ -123,23 +149,45 @@ void Interpretator::Descriptions() {
 	}
 }
 
-void Interpretator::ReadId(const LexType type) {
+void Interpretator::ReadId(LexType type) {
 	getLex(LEX_ID);
+
+	if (declared(lex.str))
+		throw "variable \"" + lex.str + "\" has already been declared";
+	vars[lex.str] = new Ident(lex.str);
+	if (type == LEX_NUM) {
+		integers[lex.str] = int();
+	} else if (type == LEX_STRING) {
+		strings[lex.str] = string();
+	}
+
 	switch(getLex()) {
-		case LEX_COMMA:     ReadId(type);    break;
-		case LEX_ASSIGN:    ReadValue(type); break;
-		case LEX_SEMICOLON: getLex();        break;
-		default:            throw lex;       break;
+		case LEX_COMMA:     ReadId(type);             break;
+		case LEX_ASSIGN:    ReadValue(lex.str, type); break;
+		case LEX_SEMICOLON: getLex();                 break;
+		default:            throw lex;                break;
 	}
 }
 
-void Interpretator::ReadValue(const LexType type) {
+void Interpretator::ReadValue(const string& name, LexType type) {
 	getLex();
 	if (type == LEX_NUM) {
-		if (lex.type == LEX_PLUS || lex.type == LEX_MINUS)
+		if (lex.type == LEX_PLUS || lex.type == LEX_MINUS) {
+			string s = lex.str;
 			getLex();
+			lex.str = s + lex.str;
+		}
 	}
+
 	checkLex(type);
+	vars[name]->assign = true;
+
+	if (type == LEX_NUM) {
+		integers[name] = strToInt(lex.str);
+	} else if (type == LEX_STRING) {
+		strings[name] = lex.str;
+	}
+
 	switch (getLex()) {
 		case LEX_COMMA:     ReadId(type); break;
 		case LEX_SEMICOLON: getLex();     break;
@@ -244,77 +292,146 @@ void Interpretator::ForBlock() {
 void Interpretator::Expression() {
 	Or();
 	while (lex.type == LEX_ASSIGN) {
-		AssignOp();
+		getLex();
 		Or();
+		AssignOp();
 	}
 }
 
 void Interpretator::AssignOp() {
-	switch(lex.type) {
-		case LEX_ASSIGN: getLex(); break;
+	LexType t2 = st.top();
+	st.pop();
+	LexType t1 = st.top();
+	st.pop();
+	if (t1 != t2) {
+		throw "incompatible types of operands";
 	}
+	st.push(t1);
 }
 
 void Interpretator::Or() {
 	And();
 	while (lex.type == LEX_OR) {
-		OrOp();
+		getLex();
 		And();
+		OrOp();
 	}
 }
 
 void Interpretator::OrOp() {
-	getLex();
+	LexType t2 = st.top();
+	st.pop();
+	LexType t1 = st.top();
+	st.pop();
+	if (t1 != t2 || t1 != LEX_NUM) {
+		throw "incompatible types of operands";
+	}
+	st.push(LEX_NUM);
 }
 
 void Interpretator::And() {
 	Relation();
 	while (lex.type == LEX_AND) {
-		AndOp();
+		getLex();
 		Relation();
+		AndOp();
 	}
 }
 
 void Interpretator::AndOp() {
-	getLex();
+	LexType t2 = st.top();
+	st.pop();
+	LexType t1 = st.top();
+	st.pop();
+	if (t1 != t2 || t1 != LEX_NUM) {
+		throw "incompatible types of operands";
+	}
+	st.push(LEX_NUM);
 }
 
 void Interpretator::Relation() {
 	Sum();
 	while (lex.type == LEX_LESS || lex.type == LEX_GREATER || lex.type == LEX_LE ||
-		lex.type == LEX_GE || lex.type == LEX_EQ || lex.type == LEX_NE)
-	{
-		RelationOp();
+			lex.type == LEX_GE || lex.type == LEX_EQ || lex.type == LEX_NE) {
+		LexType t = lex.type;
+		getLex();
 		Sum();
+		RelationOp(t);
 	}
 }
 
-void Interpretator::RelationOp() {
-	getLex();
+void Interpretator::RelationOp(LexType type) {
+	LexType t2 = st.top();
+	st.pop();
+	LexType t1 = st.top();
+	st.pop();
+	if (t1 != t2) {
+		throw "incompatible types of operands";
+	}
+	st.push(t1);
 }
 
 void Interpretator::Sum() {
 	Pr();
 	while (lex.type == LEX_PLUS || lex.type == LEX_MINUS) {
-		SumOp();
+		LexType t = lex.type;
+		getLex();
 		Pr();
+		SumOp(t);
 	}
 }
 
-void Interpretator::SumOp() {
-	getLex();
+void Interpretator::SumOp(LexType type) {
+	LexType t2 = st.top();
+	st.pop();
+	LexType t1 = st.top();
+	st.pop();
+
+	if (t1 != t2) {
+		throw "incompatible types of operands";
+	}
+	st.push(t1);
 }
 
 void Interpretator::Pr() {
-	Atom();
+	Not();
 	while (lex.type == LEX_MUL || lex.type == LEX_DIV) {
-		PrOp();
-		Atom();
+		LexType t = lex.type;
+		getLex();
+		Not();
+		PrOp(t);
 	}
 }
 
-void Interpretator::PrOp() {
-	getLex();
+void Interpretator::PrOp(LexType type) {
+	LexType t2 = st.top();
+	st.pop();
+	LexType t1 = st.top();
+	st.pop();
+
+	if (t1 != t2) {
+		throw "incompatible types of operands";
+	}
+	st.push(LEX_NUM);
+}
+
+void Interpretator::Not() {
+	if (lex.type == LEX_PLUS || lex.type == LEX_MINUS || lex.type == LEX_NOT) {
+		LexType t = lex.type;
+		getLex();
+		Atom();
+		NotOp(t);
+	}
+}
+
+void Interpretator::NotOp(LexType type) {
+	LexType t = st.top();
+	st.pop();
+
+	if (t != LEX_NUM) {
+		throw "incompatible types of operands";
+	}
+	st.push(LEX_NUM);
 }
 
 void Interpretator::Atom() {
@@ -323,17 +440,19 @@ void Interpretator::Atom() {
 			getLex();
 			Expression();
 			checkLex(LEX_CL_ROUND);
-			getLex();
 			break;
 		case LEX_ID:
+			if (!declared(lex.str))
+				throw "undeclared var \"" + lex.str + "\"";
 		case LEX_NUM:
 		case LEX_STRING:
-			getLex();
+			st.push(lex.type);
 			break;
 		default:
 			throw lex;
 			break;
 	}
+	getLex();
 }
 
 int main()
