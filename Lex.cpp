@@ -2,7 +2,7 @@
 namespace Pawka {
 
 ostream& operator<< (ostream& stream, Lex lex) {
-	static const char* names[31] { nullptr };
+	static const char* names[32] { nullptr };
     if( names[0] == nullptr ) {
 		names[0]  = "LEX_NULL      ";
 		names[1]  = "LEX_ID        ";
@@ -30,11 +30,12 @@ ostream& operator<< (ostream& stream, Lex lex) {
 		names[23] = "LEX_WRITE     ";
 		names[24] = "LEX_IF        ";
 		names[25] = "LEX_ELSE      ";
-		names[26] = "LEX_NOT       ";
-		names[27] = "LEX_AND       ";
-		names[28] = "LEX_OR        ";
-		names[29] = "LEX_INT       ";
-		names[30] = "LEX_STR       ";
+		names[26] = "LEX_FOR       ";
+		names[27] = "LEX_NOT       ";
+		names[28] = "LEX_AND       ";
+		names[29] = "LEX_OR        ";
+		names[30] = "LEX_INT       ";
+		names[31] = "LEX_STR       ";
 	}
 
 	stream << names[lex.type] << lex.str;
@@ -52,6 +53,7 @@ LexAnalizer::LexAnalizer(istream& stream)
 	TW[string("write")  ] = LEX_WRITE;
 	TW[string("if")     ] = LEX_IF;
 	TW[string("else")   ] = LEX_ELSE;
+	TW[string("for")    ] = LEX_FOR;
 	TW[string("not")    ] = LEX_NOT;
 	TW[string("and")    ] = LEX_AND;
 	TW[string("or")     ] = LEX_OR;
@@ -64,15 +66,12 @@ LexAnalizer::~LexAnalizer() {  }
 bool LexAnalizer::moveNext() {
 	int ch = 0;
 
-	if (!stream.good())
-		return false;
-
 	buf.clear();
 	state = &LexAnalizer::FirstSym;
 	while ((this->*state)(stream.get()))
 	{ }
 
-	return true;
+	return lex.type != LEX_NULL;
 }
 
 bool LexAnalizer::FirstSym(int c) {
@@ -166,6 +165,8 @@ bool LexAnalizer::BigComment(int c) {
 	static bool lastStar = false;
 	if (c == '*')
 		lastStar = true;
+	else if (c == '\n')
+		++line;
 	else if (c == '/' && lastStar)
 		state = &LexAnalizer::FirstSym;
 	else if (c == EOF)
@@ -211,6 +212,7 @@ bool LexAnalizer::ReadString(int c) {
 			buf.push_back('\"');
 			makeLex(LEX_STRING);
 			return false;
+		case '\n':
 		case EOF:
 			throw "Unexpected end of file";
 		default:
