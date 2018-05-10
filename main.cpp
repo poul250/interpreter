@@ -16,6 +16,7 @@ protected:
 class Interpretator {
 public:
 	Interpretator(istream& stream);
+	~Interpretator();
 
 	void Inerpretate();
 private:
@@ -65,8 +66,8 @@ private:
 	void Atom();
 
 	bool inline declared(const string&);
-	LexType getLex(LexType type = LEX_NULL);
 	void inline checkLex(LexType);
+	LexType getLex(LexType type = LEX_NULL);
 	int strToInt(const string&);
 
 	LexAnalizer la;
@@ -84,6 +85,11 @@ Interpretator::Interpretator(istream& stream)
 	, neadRead(true)
 {	}
 
+Interpretator::~Interpretator() {
+	for (auto i : vars)
+		delete i.second;
+}
+
 bool inline Interpretator::declared(const string& name) {
 	return vars.count(name) > 0;
 }
@@ -97,6 +103,7 @@ LexType Interpretator::getLex(LexType type) {
 	} else {
 		neadRead = true;
 	}
+	cout << lex << endl;
 	return lex.type;
 }
 
@@ -137,6 +144,8 @@ void Interpretator::Inerpretate() {
 				", Unexpected lexeme: " << endl << lex << endl;
 	} catch (string s) {
 		cout << "Error: Line " << la.getLine() << ", " << s << endl;
+	} catch (const char* s) {
+		cout << "Error: Line " << la.getLine() << ", " << s << endl;
 	}
 }
 
@@ -151,21 +160,18 @@ void Interpretator::Descriptions() {
 
 void Interpretator::ReadId(LexType type) {
 	getLex(LEX_ID);
-
 	if (declared(lex.str))
 		throw "variable \"" + lex.str + "\" has already been declared";
-	vars[lex.str] = new Ident(lex.str);
-	if (type == LEX_NUM) {
-		integers[lex.str] = int();
-	} else if (type == LEX_STRING) {
-		strings[lex.str] = string();
-	}
+
+	string name = lex.str;
+	vars[name] = new Ident(name);
+	vars[name]->type = type;
 
 	switch(getLex()) {
-		case LEX_COMMA:     ReadId(type);             break;
-		case LEX_ASSIGN:    ReadValue(lex.str, type); break;
-		case LEX_SEMICOLON: getLex();                 break;
-		default:            throw lex;                break;
+		case LEX_COMMA:     ReadId(type);          break;
+		case LEX_ASSIGN:    ReadValue(name, type); break;
+		case LEX_SEMICOLON: getLex();              break;
+		default:            throw lex;             break;
 	}
 }
 
@@ -351,9 +357,10 @@ void Interpretator::AndOp() {
 
 void Interpretator::Relation() {
 	Sum();
-	while (lex.type == LEX_LESS || lex.type == LEX_GREATER || lex.type == LEX_LE ||
+	if (lex.type == LEX_LESS || lex.type == LEX_GREATER || lex.type == LEX_LE ||
 			lex.type == LEX_GE || lex.type == LEX_EQ || lex.type == LEX_NE) {
-		LexType t = lex.type;
+		LexType t = lex.type == LEX_ID ? vars[lex.str]->type : lex.type;
+
 		getLex();
 		Sum();
 		RelationOp(t);
@@ -374,7 +381,7 @@ void Interpretator::RelationOp(LexType type) {
 void Interpretator::Sum() {
 	Pr();
 	while (lex.type == LEX_PLUS || lex.type == LEX_MINUS) {
-		LexType t = lex.type;
+		LexType t = lex.type == LEX_ID ? vars[lex.str]->type : lex.type;
 		getLex();
 		Pr();
 		SumOp(t);
@@ -382,6 +389,7 @@ void Interpretator::Sum() {
 }
 
 void Interpretator::SumOp(LexType type) {
+
 	LexType t2 = st.top();
 	st.pop();
 	LexType t1 = st.top();
@@ -390,13 +398,14 @@ void Interpretator::SumOp(LexType type) {
 	if (t1 != t2) {
 		throw "incompatible types of operands";
 	}
+
 	st.push(t1);
 }
 
 void Interpretator::Pr() {
 	Not();
 	while (lex.type == LEX_MUL || lex.type == LEX_DIV) {
-		LexType t = lex.type;
+		LexType t = lex.type == LEX_ID ? vars[lex.str]->type : lex.type;
 		getLex();
 		Not();
 		PrOp(t);
@@ -410,24 +419,26 @@ void Interpretator::PrOp(LexType type) {
 	st.pop();
 
 	if (t1 != t2) {
-		throw "incompatible types of operands";
+		throw "PrOp: incompatible types of operands";
 	}
 	st.push(LEX_NUM);
 }
 
 void Interpretator::Not() {
 	if (lex.type == LEX_PLUS || lex.type == LEX_MINUS || lex.type == LEX_NOT) {
-		LexType t = lex.type;
+		LexType t = lex.type == LEX_ID ? vars[lex.str]->type : lex.type;
 		getLex();
 		Atom();
 		NotOp(t);
+	}
+	else {
+		Atom();
 	}
 }
 
 void Interpretator::NotOp(LexType type) {
 	LexType t = st.top();
 	st.pop();
-
 	if (t != LEX_NUM) {
 		throw "incompatible types of operands";
 	}
@@ -440,10 +451,13 @@ void Interpretator::Atom() {
 			getLex();
 			Expression();
 			checkLex(LEX_CL_ROUND);
+
 			break;
 		case LEX_ID:
 			if (!declared(lex.str))
 				throw "undeclared var \"" + lex.str + "\"";
+			st.push(vars[lex.str]->type);
+			break;
 		case LEX_NUM:
 		case LEX_STRING:
 			st.push(lex.type);
