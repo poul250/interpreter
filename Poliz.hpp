@@ -2,6 +2,8 @@
 #include <vector>
 #include <stack>
 
+using namespace std;
+
 namespace Pawka {
 
 class PolizOp {
@@ -26,11 +28,17 @@ class PolizAdress : public PolizOp {
 
 class Poliz {
 public:
-    Poliz();
+    Poliz(map<string, Ident*>*, map<string, int>*,  
+			map<string, string>*, map<string, double>*);
     ~Poliz();
 private:
-    std::vector<PolizOp*> prog;
-    std::stack<PolizOp*> st;
+    vector<PolizOp*> prog;
+    stack<PolizOp*> st;
+	
+	map<string, Ident*>* vars;
+	map<string, int>* integers;
+	map<string, string>* strings;
+	map<string, double>* reals;
 };
 
 }// namespace

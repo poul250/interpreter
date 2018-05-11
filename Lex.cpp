@@ -2,7 +2,7 @@
 namespace Pawka {
 
 ostream& operator<< (ostream& stream, Lex lex) {
-	static const char* names[34] { nullptr };
+	static const char* names[35] { nullptr };
     if( names[0] == nullptr ) {
 		names[0]  = "LEX_NULL      ";
 		names[1]  = "LEX_ID        ";
@@ -32,12 +32,13 @@ ostream& operator<< (ostream& stream, Lex lex) {
 		names[25] = "LEX_IF        ";
 		names[26] = "LEX_ELSE      ";
 		names[27] = "LEX_FOR       ";
-		names[28] = "LEX_NOT       ";
-		names[29] = "LEX_AND       ";
-		names[30] = "LEX_OR        ";
-		names[31] = "LEX_INT       ";
-		names[32] = "LEX_STR       ";
-		names[33] = "LEX_REAL      ";
+		names[28] = "LEX_BREAK     ";
+		names[29] = "LEX_NOT       ";
+		names[30] = "LEX_AND       ";
+		names[31] = "LEX_OR        ";
+		names[32] = "LEX_INT       ";
+		names[33] = "LEX_STR       ";
+		names[34] = "LEX_REAL      ";
 	}
 
 	stream << names[lex.type] << lex.str;
@@ -45,23 +46,34 @@ ostream& operator<< (ostream& stream, Lex lex) {
 
 Lex::Lex(const LexType type, string str) : type(type), str(str) { }
 
-LexAnalizer::LexAnalizer(istream& stream)
-	: stream(stream)
-	, state(nullptr)
-	, line(1)
-{
+void LexAnalizer::init() {
+	state = nullptr;
+	line = 1;
 	TW[string("program")] = LEX_PROGRAM;
-	TW[string("read")   ] = LEX_READ;
-	TW[string("write")  ] = LEX_WRITE;
-	TW[string("if")     ] = LEX_IF;
-	TW[string("else")   ] = LEX_ELSE;
-	TW[string("for")    ] = LEX_FOR;
-	TW[string("not")    ] = LEX_NOT;
-	TW[string("and")    ] = LEX_AND;
-	TW[string("or")     ] = LEX_OR;
-	TW[string("int")    ] = LEX_INT;
-	TW[string("string") ] = LEX_STR;
-	TW[string("real")   ] = LEX_REAL;
+	TW[string("read"   )] = LEX_READ;
+	TW[string("write"  )] = LEX_WRITE;
+	TW[string("if"     )] = LEX_IF;
+	TW[string("else"   )] = LEX_ELSE;
+	TW[string("for"    )] = LEX_FOR;
+	TW[string("break"  )] = LEX_BREAK;	
+	TW[string("not"    )] = LEX_NOT;
+	TW[string("and"    )] = LEX_AND;
+	TW[string("or"     )] = LEX_OR;
+	TW[string("int"    )] = LEX_INT;
+	TW[string("string" )] = LEX_STR;
+	TW[string("real"   )] = LEX_REAL;
+}
+
+LexAnalizer::LexAnalizer(istream& stream) 
+		: stream(stream)
+		, fromFile(false) {	
+	init();
+}
+
+LexAnalizer::LexAnalizer(ifstream& fstream) 
+		: fstream(fstream)
+		, fromFile(true) {
+	init();
 }
 
 LexAnalizer::~LexAnalizer() {  }
@@ -71,10 +83,18 @@ bool LexAnalizer::moveNext() {
 
 	buf.clear();
 	state = &LexAnalizer::FirstSym;
-	while ((this->*state)(stream.get()))
+	while ((this->*state)(get()))
 	{ }
 
 	return lex.type != LEX_NULL;
+}
+
+int inline LexAnalizer::get() {
+	return fromFile ? fstream.get() : stream.get();
+}
+
+void inline LexAnalizer::unget() {
+	fromFile ? fstream.unget() : stream.unget();
 }
 
 bool LexAnalizer::FirstSym(int c) {
@@ -134,7 +154,7 @@ bool LexAnalizer::ComplexOperation(int c) {
 			state = &LexAnalizer::BigComment;
 			return true;
 		} else {
-			stream.unget();
+			unget();
 			makeLex(LEX_DIV);
 		}
 	} else if (c == '=') {
@@ -146,7 +166,7 @@ bool LexAnalizer::ComplexOperation(int c) {
 			case '!': makeLex(LEX_NE); break;
 		}
 	} else {
-		stream.unget();
+		unget();
 		switch (ch) {
 			case '<': makeLex(LEX_LESS);    break;
 			case '>': makeLex(LEX_GREATER); break;
@@ -189,7 +209,7 @@ bool LexAnalizer::ReadId(int c) {
 		else
 			makeLex(LEX_ID);
 
-		stream.unget();
+		unget();
 		return false;
 	}
 }
@@ -204,19 +224,24 @@ bool LexAnalizer::ReadNum(int c) {
 		return true;
 	} else {
 		makeLex(LEX_NUM);
-		stream.unget();
+		unget();
 	}
 
 	return false;
 }
 
 bool LexAnalizer::ReadRealNum(int c) {
+	static int num = 0;
 	if (isdigit(c)) {
+		++num;
 		buf.push_back(c);
 		return true;
 	} else {
+		if (num == 0)
+			throw "unexpected symbol '" + string((char*)(&c)) + "'";
 		makeLex(LEX_REAL_NUM);
-		stream.unget();
+		unget();
+		num = 0;
 		return false;
 	}
 }

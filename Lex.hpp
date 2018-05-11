@@ -17,7 +17,7 @@ enum LexType {
 	LEX_LESS     /* <  */, LEX_GREATER   /* >  */,
 	LEX_EQ       /* == */, LEX_NE        /* != */,
 	LEX_LE       /* <= */, LEX_GE        /* >= */,
-	LEX_PROGRAM, LEX_READ, LEX_WRITE, LEX_IF, LEX_ELSE, LEX_FOR,
+	LEX_PROGRAM, LEX_READ, LEX_WRITE, LEX_IF, LEX_ELSE, LEX_FOR, LEX_BREAK,
 	LEX_NOT, LEX_AND, LEX_OR, LEX_INT, LEX_STR, LEX_REAL,
 	POLIZ_LABEL, POLIZ_ADRESS, POLIS_GO, POLIS_FGO
 };
@@ -34,6 +34,7 @@ struct Lex {
 class LexAnalizer {
 public:
 	LexAnalizer(istream& stream);
+	LexAnalizer(ifstream& stream);
 	~LexAnalizer();
 
 	bool moveNext();
@@ -42,6 +43,8 @@ public:
 
 private:
 	typedef bool (LexAnalizer::*State) (int c);
+
+	void init();
 
 	bool FirstSym (int c);
 	bool ComplexOperation(int c);
@@ -55,8 +58,13 @@ private:
 
 	void makeLex(LexType type) { lex = Lex(type, buf); };
 
+	int get();
+	void unget();
+
+	bool fromFile;
 	string buf;
 	istream& stream;
+	ifstream& fstream;
 	State state;
 	Lex lex;
 	map<string, LexType> TW;
