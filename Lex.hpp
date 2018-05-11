@@ -8,8 +8,8 @@ using namespace std;
 
 namespace Pawka {
 enum LexType {
-	LEX_NULL, LEX_ID, LEX_NUM, LEX_STRING,
-	LEX_OP_BRACE /* {  */, LEX_CL_BRACE  /* }  */, LEX_ASSIGN/* = */,
+	LEX_NULL, LEX_ID, LEX_NUM, LEX_REAL_NUM, LEX_STRING,
+	LEX_OP_BRACE /* {  */, LEX_CL_BRACE  /* }  */, LEX_ASSIGN   /* =  */,
 	LEX_OP_ROUND /* (  */, LEX_CL_ROUND  /* )  */,
 	LEX_COMMA    /* ,  */, LEX_SEMICOLON /* ;  */,
 	LEX_PLUS     /* +  */, LEX_MINUS     /* -  */,
@@ -18,7 +18,7 @@ enum LexType {
 	LEX_EQ       /* == */, LEX_NE        /* != */,
 	LEX_LE       /* <= */, LEX_GE        /* >= */,
 	LEX_PROGRAM, LEX_READ, LEX_WRITE, LEX_IF, LEX_ELSE, LEX_FOR,
-	LEX_NOT, LEX_AND, LEX_OR, LEX_INT, LEX_STR,
+	LEX_NOT, LEX_AND, LEX_OR, LEX_INT, LEX_STR, LEX_REAL,
 	POLIZ_LABEL, POLIZ_ADRESS, POLIS_GO, POLIS_FGO
 };
 
@@ -47,6 +47,7 @@ private:
 	bool ComplexOperation(int c);
 	bool ReadId (int c);
 	bool ReadNum (int c);
+	bool ReadRealNum(int c);
 	bool ReadString (int c);
 	bool Shielding(int c);
 	bool Comment(int c);

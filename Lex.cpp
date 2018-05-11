@@ -2,40 +2,42 @@
 namespace Pawka {
 
 ostream& operator<< (ostream& stream, Lex lex) {
-	static const char* names[32] { nullptr };
+	static const char* names[34] { nullptr };
     if( names[0] == nullptr ) {
 		names[0]  = "LEX_NULL      ";
 		names[1]  = "LEX_ID        ";
 		names[2]  = "LEX_NUM       ";
-		names[3]  = "LEX_STRING    ";
-		names[4]  = "LEX_OP_BRACE  ";
-		names[5]  = "LEX_CL_BRACE  ";
-		names[6]  = "LEX_ASSIGN    ";
-		names[7]  = "LEX_OP_ROUND  ";
-		names[8]  = "LEX_CL_ROUND  ";
-		names[9]  = "LEX_COMMA     ";
-		names[10] = "LEX_SEMICOLON ";
-		names[11] = "LEX_PLUS      ";
-		names[12] = "LEX_MINUS     ";
-		names[13] = "LEX_MUL       ";
-		names[14] = "LEX_DIV       ";
-		names[15] = "LEX_LESS      ";
-		names[16] = "LEX_GREATER   ";
-		names[17] = "LEX_EQ        ";
-		names[18] = "LEX_NE        ";
-		names[19] = "LEX_LE        ";
-		names[20] = "LEX_GE        ";
-		names[21] = "LEX_PROGRAM   ";
-		names[22] = "LEX_READ      ";
-		names[23] = "LEX_WRITE     ";
-		names[24] = "LEX_IF        ";
-		names[25] = "LEX_ELSE      ";
-		names[26] = "LEX_FOR       ";
-		names[27] = "LEX_NOT       ";
-		names[28] = "LEX_AND       ";
-		names[29] = "LEX_OR        ";
-		names[30] = "LEX_INT       ";
-		names[31] = "LEX_STR       ";
+		names[3]  = "LEX_REAL_NUM  ";
+		names[4]  = "LEX_STRING    ";
+		names[5]  = "LEX_OP_BRACE  ";
+		names[6]  = "LEX_CL_BRACE  ";
+		names[7]  = "LEX_ASSIGN    ";
+		names[8]  = "LEX_OP_ROUND  ";
+		names[9]  = "LEX_CL_ROUND  ";
+		names[10] = "LEX_COMMA     ";
+		names[11] = "LEX_SEMICOLON ";
+		names[12] = "LEX_PLUS      ";
+		names[13] = "LEX_MINUS     ";
+		names[14] = "LEX_MUL       ";
+		names[15] = "LEX_DIV       ";
+		names[16] = "LEX_LESS      ";
+		names[17] = "LEX_GREATER   ";
+		names[18] = "LEX_EQ        ";
+		names[19] = "LEX_NE        ";
+		names[20] = "LEX_LE        ";
+		names[21] = "LEX_GE        ";
+		names[22] = "LEX_PROGRAM   ";
+		names[23] = "LEX_READ      ";
+		names[24] = "LEX_WRITE     ";
+		names[25] = "LEX_IF        ";
+		names[26] = "LEX_ELSE      ";
+		names[27] = "LEX_FOR       ";
+		names[28] = "LEX_NOT       ";
+		names[29] = "LEX_AND       ";
+		names[30] = "LEX_OR        ";
+		names[31] = "LEX_INT       ";
+		names[32] = "LEX_STR       ";
+		names[33] = "LEX_REAL      ";
 	}
 
 	stream << names[lex.type] << lex.str;
@@ -59,6 +61,7 @@ LexAnalizer::LexAnalizer(istream& stream)
 	TW[string("or")     ] = LEX_OR;
 	TW[string("int")    ] = LEX_INT;
 	TW[string("string") ] = LEX_STR;
+	TW[string("real")   ] = LEX_REAL;
 }
 
 LexAnalizer::~LexAnalizer() {  }
@@ -111,8 +114,8 @@ bool LexAnalizer::FirstSym(int c) {
 			} else if (isdigit(c)) {
 				state = &LexAnalizer::ReadNum;
 				return true;
-			} else {
-				throw "Unexpected sym";
+			} else {	//APASNA
+				throw "Unexpected sym '" + string((char*)(&c)) + "'";
 			}
 			break;
 	}
@@ -148,7 +151,7 @@ bool LexAnalizer::ComplexOperation(int c) {
 			case '<': makeLex(LEX_LESS);    break;
 			case '>': makeLex(LEX_GREATER); break;
 			case '=': makeLex(LEX_ASSIGN);  break;
-			case '!': throw "Unexpected symbol";break;
+			case '!': throw "Unexpected symbol '!'";break;
 		}
 	}
 
@@ -195,12 +198,27 @@ bool LexAnalizer::ReadNum(int c) {
 	if (isdigit(c)) {
 		buf.push_back(c);
 		return true;
+	} else if (c == '.') {
+		buf.push_back(c);
+		state = &LexAnalizer::ReadRealNum;
+		return true;
 	} else {
-		makeLex(LexType::LEX_NUM);
+		makeLex(LEX_NUM);
 		stream.unget();
 	}
 
 	return false;
+}
+
+bool LexAnalizer::ReadRealNum(int c) {
+	if (isdigit(c)) {
+		buf.push_back(c);
+		return true;
+	} else {
+		makeLex(LEX_REAL_NUM);
+		stream.unget();
+		return false;
+	}
 }
 
 bool LexAnalizer::ReadString(int c) {
