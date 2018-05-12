@@ -19,7 +19,6 @@ protected:
 class Interpretator {
 public:
 	Interpretator(istream& stream);
-	Interpretator(ifstream& stream);
 	~Interpretator();
 
 	void Inerpretate();
@@ -41,8 +40,10 @@ private:
 	void Operator();
 	void IfBlock();
 	void ForBlock();
+	void WhileBlock();
 	void ReadFunc();
 	void WriteFunc();
+	void BreakOp();
 	void OpExpression();
 
 	//Expression states
@@ -82,11 +83,6 @@ private:
 
 Interpretator::Interpretator(istream& stream)
 	: la(stream)
-	, neadRead(true)
-{	}
-
-Interpretator::Interpretator(ifstream& fstream) 
-	: la(fstream)
 	, neadRead(true)
 {	}
 
@@ -211,6 +207,8 @@ void Interpretator::Inerpretate() {
 		cout << "Error: Line " << la.getLine() << ", " << s << endl;
 	} catch (const char* s) {
 		cout << "Error: Line " << la.getLine() << ", " << s << endl;
+	} catch (out_of_range) {
+		cout << "Error: Line " << la.getLine() << ", " << "out of range" <<endl;
 	}
 }
 
@@ -255,11 +253,11 @@ void Interpretator::ReadValue(const string& name, LexType type) {
 	vars[name]->assign = true;
 
 	if (type == LEX_NUM) 
-		integers[name] = strToInt(lex.str);
+		integers[name] = stoi(lex.str);
 	else if (type == LEX_STRING)
 		strings[name] = lex.str;
 	else if (type == LEX_REAL_NUM) 
-		reals[name] = strToDouble(lex.str);
+		reals[name] = stod(lex.str);
 
 	switch (getLex()) {
 		case LEX_COMMA:     ReadId(type); break;
@@ -290,6 +288,8 @@ void Interpretator::Operator() {
 		case LEX_IF:    IfBlock();      break;
 		case LEX_FOR:   ForBlock();     break;
 		case LEX_ID:    OpExpression(); break;
+		case LEX_WHILE: WhileBlock();   break;
+		case LEX_BREAK: BreakOp();      break;
 		default:        throw lex;      break;
 	}
 }
@@ -363,6 +363,24 @@ void Interpretator::ForBlock() {
 	if (getLex() == LEX_OP_BRACE) {
 		getLex();
 		Operators();
+	} else {
+		Operator();
+	}
+}
+
+void Interpretator::WhileBlock() {
+	getLex(LEX_OP_ROUND);
+	getLex();
+	st = stack<Lex>();
+	Expression();
+	if(getType(st.top()) != LEX_NUM) {
+		throw "expected logical value";
+	}
+	checkLex(LEX_CL_ROUND);
+	getLex();
+	if (lex.type == LEX_OP_BRACE) {
+		getLex();
+		Operators();		
 	} else {
 		Operator();
 	}
@@ -538,19 +556,25 @@ void Interpretator::Atom() {
 
 int main(int argc, char* argv[])
 {
-	if (argc > 3) {
-		cout << "Usage: " + string(argv[0]) + " [file_name]" << endl;
+	ifstream fstream;
+	bool fromFile = false;
+	if (argc >= 3) {
+		cout << "Usage: " << argv[0] << " [file_name]" << endl;
 		return -1;
 	}
-	if (argc == 2) {
-		ifstream fstream(argv[1]);
-		Interpretator sa(fstream);
-		sa.Inerpretate();
+	else if (argc == 2) {
+		fstream.open(argv[1]);
+		fromFile = true;
+		if (!fromFile) {
+			cout << "Error: can't open file" << endl;
+			return -1;
+		}
 	}
-	else {
-		Interpretator sa(cin);
-		sa.Inerpretate();
-	}
+
+	istream& stream = fromFile ? fstream : cin;	
+
+	Interpretator sa(stream);
+	sa.Inerpretate();
 
 	return 0;
 }

@@ -2,7 +2,7 @@
 namespace Pawka {
 
 ostream& operator<< (ostream& stream, Lex lex) {
-	static const char* names[35] { nullptr };
+	static const char* names[36] { nullptr };
     if( names[0] == nullptr ) {
 		names[0]  = "LEX_NULL      ";
 		names[1]  = "LEX_ID        ";
@@ -39,6 +39,7 @@ ostream& operator<< (ostream& stream, Lex lex) {
 		names[32] = "LEX_INT       ";
 		names[33] = "LEX_STR       ";
 		names[34] = "LEX_REAL      ";
+		names[35] = "LEX_WHILE     ";
 	}
 
 	stream << names[lex.type] << lex.str;
@@ -62,17 +63,12 @@ void LexAnalizer::init() {
 	TW[string("int"    )] = LEX_INT;
 	TW[string("string" )] = LEX_STR;
 	TW[string("real"   )] = LEX_REAL;
+	TW[string("while"  )] = LEX_WHILE;
 }
 
 LexAnalizer::LexAnalizer(istream& stream) 
 		: stream(stream)
 		, fromFile(false) {	
-	init();
-}
-
-LexAnalizer::LexAnalizer(ifstream& fstream) 
-		: fstream(fstream)
-		, fromFile(true) {
 	init();
 }
 
@@ -90,11 +86,11 @@ bool LexAnalizer::moveNext() {
 }
 
 int inline LexAnalizer::get() {
-	return fromFile ? fstream.get() : stream.get();
+	return stream.get();
 }
 
 void inline LexAnalizer::unget() {
-	fromFile ? fstream.unget() : stream.unget();
+	stream.unget();
 }
 
 bool LexAnalizer::FirstSym(int c) {
@@ -128,7 +124,7 @@ bool LexAnalizer::FirstSym(int c) {
 				if (c == '\n')
 					++line;
 				return true;
-			} else if (isalpha(c)) {
+			} else if (isalpha(c) || c == '_') {
 				state = &LexAnalizer::ReadId;
 				return true;
 			} else if (isdigit(c)) {
@@ -200,7 +196,7 @@ bool LexAnalizer::BigComment(int c) {
 }
 
 bool LexAnalizer::ReadId(int c) {
-	if (isalpha(c) || isdigit(c)) {
+	if (isalpha(c) || isdigit(c) || c == '_') {
 		buf.push_back(c);
 		return true;
 	} else {
@@ -256,6 +252,7 @@ bool LexAnalizer::ReadString(int c) {
 			makeLex(LEX_STRING);
 			return false;
 		case '\n':
+			throw "Unexpected end of line";
 		case EOF:
 			throw "Unexpected end of file";
 		default:
