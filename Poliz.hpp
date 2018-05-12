@@ -2,13 +2,22 @@
 #include <vector>
 #include <stack>
 #include <map>
+#include "utils.hpp"
+#include "Lex.hpp"
 
 using namespace std;
 
 namespace Pawka {
 
+struct Value {
+	LexType type;
+	int ivar;
+	double dvar;
+	string svar;
+};
+
 struct Context {
-	stack<PolizOp> st;
+	stack<Value> st;
 	map<string, Ident*>& vars;
 	map<string, int>& integers;
 	map<string, string>& strings;
@@ -19,6 +28,10 @@ struct Context {
 class PolizOp {
 public:
 	virtual void execute(Context& context) = 0;
+};
+
+class PolizRead : public PolizOp {
+	void execute(Context& context) override;
 };
 
 }// namespace

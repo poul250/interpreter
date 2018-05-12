@@ -20,14 +20,6 @@ public:
 
 	void Inerpretate();
 private:
-	struct Ident {
-		Ident(const string& src);
-		Ident(const Ident&);
-
-		string name;
-		LexType type;
-		bool assign;
-	};
 
 	//Program states
 	void Descriptions();
@@ -76,6 +68,8 @@ private:
 	map<string, string> strings;
 	map<string, double> reals;
 	stack<Lex> st;
+
+	
 };
 
 Interpretator::Interpretator(istream& stream)
@@ -87,18 +81,6 @@ Interpretator::~Interpretator() {
 	for (auto i : vars)
 		delete i.second;
 }
-
-Interpretator::Ident::Ident(const string& src)
-	: assign(false)
-	, type(LEX_NULL)
-	, name(src)
-{	}
-
-Interpretator::Ident::Ident(const Ident& src)
-	: assign(src.assign)
-	, type(src.type)
-	, name(src.name)
-{	}
 
 bool inline Interpretator::declared(const string& name) {
 	return vars.count(name) > 0;

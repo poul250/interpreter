@@ -1,13 +1,12 @@
 #include <iostream>
+#include <locale>
 #include <fstream> 
 #include <string>
+#include <libintl.h>
 using namespace std;
 
 int main() {
-	istream* stream;
-
-	ifstream fstream(string("test.txt"));
-	stream = &fstream;
-	
+	setLocale(LC_ALL, "Russian");
+	cout << gettext("Hello world!");
 	return 0;
 }
