@@ -7,14 +7,11 @@
 #include "Lex.hpp"
 //#include "Poliz.hpp"
 #include "utils.hpp"
+#include "Poliz.hpp"
 
 using namespace std;
 using namespace Pawka;
 
-class PolizOp {
-protected:
-	virtual void execute() = 0;
-};
 
 class Interpretator {
 public:
@@ -309,6 +306,11 @@ void Interpretator::WriteFunc() {
 		Expression();
 	} while (lex.type == LEX_COMMA);
 	checkLex(LEX_CL_ROUND);
+	getLex(LEX_SEMICOLON);
+	getLex();
+}
+
+void Interpretator::BreakOp() {
 	getLex(LEX_SEMICOLON);
 	getLex();
 }

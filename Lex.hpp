@@ -59,7 +59,6 @@ private:
 	int get();
 	void unget();
 
-	bool fromFile;
 	string buf;
 	istream& stream;
 	State state;

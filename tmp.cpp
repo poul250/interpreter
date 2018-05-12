@@ -1,9 +1,13 @@
-
-enum nums{
-	zero, one = 1, two, three
+#include <iostream>
+#include <fstream> 
+#include <string>
+using namespace std;
 
 int main() {
-	nums(2)	
+	istream* stream;
 
+	ifstream fstream(string("test.txt"));
+	stream = &fstream;
+	
 	return 0;
 }

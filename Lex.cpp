@@ -67,8 +67,7 @@ void LexAnalizer::init() {
 }
 
 LexAnalizer::LexAnalizer(istream& stream) 
-		: stream(stream)
-		, fromFile(false) {	
+		: stream(stream) {	
 	init();
 }
 
