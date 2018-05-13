@@ -2,7 +2,9 @@
 #include <vector>
 #include <stack>
 #include <map>
+#include <string>
 #include "utils.hpp"
+#include "types.hpp"
 #include "Lex.hpp"
 
 using namespace std;
@@ -10,11 +12,10 @@ using namespace std;
 namespace Pawka {
 
 struct Context {
-	stack<Value> st;
-	map<string, Ident*>& vars;
-	map<string, int>& integers;
-	map<string, string>& strings;
-	map<string, double>& reals;
+	Context(map<string, Data>);
+
+	stack<Data> st;
+	map<string, Data>& vars;
 	int commandIndex;
 };
 
@@ -24,7 +25,23 @@ public:
 };
 
 class PolizRead : public PolizOp {
+public:
 	virtual void execute(Context& context) override;
 };
+
+class PolizWrite : public PolizOp {
+public:
+	virtual void execute(Context& context) override;
+};
+
+class PolizData : public PolizOp {
+public:
+	virtual void execute(Context& context) override;
+	PolizData(Data src, bool v = false) : data(src), var(v){	}
+private:
+	Data data;
+	bool var;
+};
+
 
 }// namespace

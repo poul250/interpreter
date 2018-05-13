@@ -5,7 +5,7 @@
 #include <string>
 #include <stack>
 #include "Lex.hpp"
-//#include "Poliz.hpp"
+#include "Poliz.hpp"
 #include "utils.hpp"
 #include "types.hpp"
 
@@ -37,7 +37,7 @@ private:
 	//Expression states
 	void Expression();
 	void Assign();
-	void AssignOp();
+	void AssignOp(int);
 	void Or();
 	void OrOp();
 	void And();
@@ -57,24 +57,23 @@ private:
 	LexType inline getType(const Lex&);
 	LexType getLex(LexType type = LEX_NULL);
 
+	void execute();
+
 	LexAnalizer la;
-	bool neadRead;
 	Lex lex;
 
 	map<string, Data> data;
 	stack<Lex> st;
+	vector<PolizOp*> ops;
 };
 
 Interpretator::Interpretator(istream& stream)
 	: la(stream)
-	, neadRead(true)
 {	}
 
 Interpretator::~Interpretator() {
-	/*
-	for (auto i : data)
-		delete i.second;
-		*/
+	for(i : ops)
+		delete i;
 }
 
 bool inline Interpretator::declared(const string& name) {
@@ -91,15 +90,11 @@ LexType inline Interpretator::getType(const Lex& l) {
 }
 
 LexType Interpretator::getLex(LexType type) {
-	if (neadRead) {
-		la.moveNext();
-		lex = la.current();
-		if (type != LEX_NULL && type != lex.type)
-			throw lex;
-	} else {
-		neadRead = true;
-	}
-	cout << lex << endl;
+	la.moveNext();
+	lex = la.current();
+	if (type != LEX_NULL && type != lex.type)
+		throw lex;
+	// cout << lex << endl;
 	return lex.type;
 }
 
@@ -126,6 +121,16 @@ void Interpretator::Inerpretate() {
 	} catch (out_of_range) {
 		cout << "Error: Line " << la.getLine() << ", " << "out of range" <<endl;
 	}
+	execute();
+}
+
+void Interpretator::execute() {
+	Context cont(data);
+	while (cont.commandIndex < ops.size()) {
+		PolizOp* op = ops[cont.commandIndex];
+		cont.commandIndex++;
+		op->execute(cont);
+	}
 }
 
 void Interpretator::Descriptions() {
@@ -143,7 +148,7 @@ void Interpretator::ReadId(LexType type) {
 	if (declared(lex.str))
 		throw "variable \"" + lex.str + "\" has already been declared";
 
-	const string& name = lex.str;
+	string name = lex.str;
 
 	data[name] = Data(type);
 	switch(getLex()) {
@@ -183,7 +188,7 @@ void Interpretator::ReadValue(const string& name, LexType type) {
 }
 
 void Interpretator::Operators() {
-	while (lex.type != LEX_CL_BRACE) {
+	while 	(lex.type != LEX_CL_BRACE) {
 		switch(lex.type) {
 			case LEX_OP_BRACE:
 				getLex();
@@ -213,6 +218,8 @@ void Interpretator::Operator() {
 void Interpretator::ReadFunc() {
 	getLex(LEX_OP_ROUND);
 	getLex(LEX_ID);
+	ops.push_back(new PolizData(lex.str));
+	ops.push_back(new PolizRead());
 	getLex(LEX_CL_ROUND);
 	getLex(LEX_SEMICOLON);
 	getLex();
@@ -222,7 +229,9 @@ void Interpretator::WriteFunc() {
 	getLex(LEX_OP_ROUND);
 	do {
 		getLex();
+		st = stack<Lex>();
 		Expression();
+		ops.push_back(new PolizWrite());
 	} while (lex.type == LEX_COMMA);
 	checkLex(LEX_CL_ROUND);
 	getLex(LEX_SEMICOLON);
@@ -318,20 +327,23 @@ void Interpretator::OpExpression() {
 
 void Interpretator::Expression() {
 	Or();
+	int shift = ops.size();
 	if (lex.type == LEX_ASSIGN) {
 		getLex();
 		Or();
-		AssignOp();
+		AssignOp(shift);
 	}
 }
 
-void Interpretator::AssignOp() {
+void Interpretator::AssignOp(int shift) {
 	LexType t2 = getType(st.top());
 	st.pop();
 	Lex l1 = st.top();
 	st.pop();
 	if (l1.type != LEX_ID)
 		throw "tried to assign const";
+	delete ops[shift];
+	ops[shift] = new PolizData(l1.str);
 	st.push(Data::compatible(getType(l1), LEX_ASSIGN, t2));
 }
 
@@ -411,7 +423,7 @@ void Interpretator::SumOp(LexType type) {
 	LexType t1 = getType(st.top());
 	st.pop();
 
-	st.push(Lex(Data::compatible(t1, type, t2)));
+	st.push(Data::compatible(t1, type, t2));
 }
 
 void Interpretator::Pr() {
@@ -430,7 +442,7 @@ void Interpretator::PrOp(LexType type) {
 	LexType t1 = getType(st.top());
 	st.pop();
 
-	st.push(Lex(Data::compatible(t1, type, t2)));
+	st.push(Data::compatible(t1, type, t2));
 }
 
 void Interpretator::Not() {
@@ -463,9 +475,13 @@ void Interpretator::Atom() {
 		case LEX_ID:
 			if (!declared(lex.str))
 				throw "undeclared var \"" + lex.str + "\"";
+			ops.push_back(new PolizData(lex.str, true));
+			st.push(lex);
+			break;
 		case LEX_NUM:
 		case LEX_REAL_NUM:
 		case LEX_STRING:
+			ops.push_back(new PolizData(lex));
 			st.push(lex);
 			break;
 		default:

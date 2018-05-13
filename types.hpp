@@ -37,8 +37,16 @@ public:
     // Data operator||(const Data&);
     // Data operator! (const Data&);
     LexType getType() const { return type; }
+    int getI() const { return val.i; }
+    double getD() const { return val.d; }
+    string getS() const { return val.s; }
+
+    operator int() const { return val.i; }
+    operator double() const { return val.d; }
+    operator string() const { return val.s; }
 
     friend ostream& operator<<(ostream&, const Data&);
+    friend istream& operator>>(istream&, Data&);
 private:
     void cpy(const string&);
     // void cpy(const char&);

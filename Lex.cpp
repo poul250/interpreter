@@ -56,7 +56,7 @@ void LexAnalizer::init() {
 	TW[string("if"     )] = LEX_IF;
 	TW[string("else"   )] = LEX_ELSE;
 	TW[string("for"    )] = LEX_FOR;
-	TW[string("break"  )] = LEX_BREAK;	
+	TW[string("break"  )] = LEX_BREAK;
 	TW[string("not"    )] = LEX_NOT;
 	TW[string("and"    )] = LEX_AND;
 	TW[string("or"     )] = LEX_OR;
@@ -66,8 +66,8 @@ void LexAnalizer::init() {
 	TW[string("while"  )] = LEX_WHILE;
 }
 
-LexAnalizer::LexAnalizer(istream& stream) 
-		: stream(stream) {	
+LexAnalizer::LexAnalizer(istream& stream)
+		: stream(stream) {
 	init();
 }
 
@@ -114,6 +114,7 @@ bool LexAnalizer::FirstSym(int c) {
 			state = &LexAnalizer::ComplexOperation;
 			return true;
 		case '\"':
+			buf.pop_back();
 			state = &LexAnalizer::ReadString;
 			return true;
 
@@ -247,7 +248,6 @@ bool LexAnalizer::ReadString(int c) {
 			state = &LexAnalizer::Shielding;
 			return true;
 		case '\"':
-			buf.push_back('\"');
 			makeLex(LEX_STRING);
 			return false;
 		case '\n':

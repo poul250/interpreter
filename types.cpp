@@ -15,9 +15,24 @@ ostream& operator<<(ostream& stream, const Data& data) {
         stream << data.val.d;
     else if (data.type == LEX_STRING)
         stream << data.val.s;
+    return stream;
 }
 
-Data::Data(Pawka::LexType type)
+istream& operator>>(istream& stream, Data& data) {
+    if (data.type == LEX_NUM) {
+        stream >> data.val.i;
+    } else if (data.type == LEX_REAL_NUM) {
+        stream >> data.val.d;
+    } else if (data.type == LEX_STRING) {
+        string s;
+        cin >> s;
+        delete[] data.val.s;
+        data.cpy(s);
+    }
+    return stream;
+}
+
+Data::Data(LexType type)
         : type(type) {
     if (type == LEX_NULL)
         val.i = 0;
