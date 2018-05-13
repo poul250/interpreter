@@ -9,13 +9,6 @@ using namespace std;
 
 namespace Pawka {
 
-struct Value {
-	LexType type;
-	int ivar;
-	double dvar;
-	string svar;
-};
-
 struct Context {
 	stack<Value> st;
 	map<string, Ident*>& vars;
@@ -31,7 +24,7 @@ public:
 };
 
 class PolizRead : public PolizOp {
-	void execute(Context& context) override;
+	virtual void execute(Context& context) override;
 };
 
 }// namespace
