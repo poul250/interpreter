@@ -94,7 +94,7 @@ LexType Interpretator::getLex(LexType type) {
 	lex = la.current();
 	if (type != LEX_NULL && type != lex.type)
 		throw lex;
-	// cout << lex << endl;
+	cout << lex << endl;
 	return lex.type;
 }
 
@@ -424,6 +424,7 @@ void Interpretator::SumOp(LexType type) {
 	st.pop();
 
 	st.push(Data::compatible(t1, type, t2));
+	ops.push_back(new PolizExpr(type));
 }
 
 void Interpretator::Pr() {
@@ -448,6 +449,8 @@ void Interpretator::PrOp(LexType type) {
 void Interpretator::Not() {
 	if (lex.type == LEX_PLUS || lex.type == LEX_MINUS || lex.type == LEX_NOT) {
 		LexType t = lex.type;
+		if (t == LEX_MINUS)
+			ops.push_back(new PolizData(0));
 		getLex();
 		Atom();
 		NotOp(t);
@@ -462,6 +465,8 @@ void Interpretator::NotOp(LexType type) {
 	st.pop();
 	if (t != LEX_NUM)
 		throw "incompatible types of operands";
+	if (type == LEX_MINUS || type == LEX_NOT)
+		ops.push_back(new PolizExpr(type));
 	st.push(Lex(LEX_NUM));
 }
 

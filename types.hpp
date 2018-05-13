@@ -16,26 +16,26 @@ public:
     Data(LexType type = LEX_NULL);
     Data(int);
     Data(double);
-    Data(const string&);
+    Data(string);
     Data(const char*);
     Data(const Data&);
-    Data(const Lex&);
+    Data(Lex);
     ~Data();
 
+    Data operator! ();
     Data operator= (const Data&);
-    // Data operator+ (const Data&);
-    // Data operator- (const Data&);
-    // Data operator* (const Data&);
-    // Data operator/ (const Data&);
-    // Data operator< (const Data&);
-    // Data operator> (const Data&);
-    // Data operator<=(const Data&);
-    // Data operator>=(const Data&);
-    // Data operator==(const Data&);
-    // Data operator!=(const Data&);
-    // Data operator&&(const Data&);
-    // Data operator||(const Data&);
-    // Data operator! (const Data&);
+    Data operator+ (const Data&);
+    Data operator- (const Data&);
+    Data operator* (const Data&);
+    Data operator/ (const Data&);
+    Data operator< (const Data&);
+    Data operator> (const Data&);
+    Data operator<=(const Data&);
+    Data operator>=(const Data&);
+    Data operator==(const Data&);
+    Data operator!=(const Data&);
+    Data operator&&(const Data&);
+    Data operator||(const Data&);
     LexType getType() const { return type; }
     int getI() const { return val.i; }
     double getD() const { return val.d; }

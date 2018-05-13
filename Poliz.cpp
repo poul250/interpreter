@@ -25,7 +25,42 @@ void PolizData::execute(Context& cont) {
         cont.st.push(cont.vars[data]);
     else
         cont.st.push(data);
-
 }
 
+void PolizExpr::execute(Context& cont) {
+    Data d2 = cont.st.top();
+    cont.st.pop();
+    if (type == LEX_NOT) {
+        cont.st.push(!d2);
+    } else {
+        Data d1 = cont.st.top();
+        cont.st.pop();
+        if (type == LEX_ASSIGN)
+            cont.st.push(cont.vars[d1] = d2);
+        else if (type == LEX_PLUS)
+            cont.st.push(d1 + d2);
+        else if (type == LEX_MINUS)
+            cont.st.push(d1 - d2);
+        else if (type == LEX_MUL)
+            cont.st.push(d1 * d2);
+        else if (type == LEX_DIV)
+            cont.st.push(d1 / d2);
+        else if (type == LEX_LESS)
+            cont.st.push(d1 < d2);
+        else if (type == LEX_GREATER)
+            cont.st.push(d1 > d2);
+        else if (type == LEX_LE)
+            cont.st.push(d1 <= d2);
+        else if (type == LEX_GE)
+            cont.st.push(d1 >= d2);
+        else if (type == LEX_EQ)
+            cont.st.push(d1 == d2);
+        else if (type == LEX_NE)
+            cont.st.push(d1 != d2);
+        else if (type == LEX_AND)
+            cont.st.push(d1 && d2);
+        else if (type == LEX_OR)
+            cont.st.push(d1 || d2);
+    }
+}
 }//namespace

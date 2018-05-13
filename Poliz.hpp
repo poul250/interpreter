@@ -43,5 +43,12 @@ private:
 	bool var;
 };
 
+class PolizExpr : public PolizOp {
+public:
+	PolizExpr(LexType t) : type(t) { }
+	virtual void execute(Context& context) override;
+private:
+	LexType type;
+};
 
 }// namespace

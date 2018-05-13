@@ -54,7 +54,7 @@ Data::Data(double x)
     val.d = x;
 }
 
-Data::Data(const string& x)
+Data::Data(string x)
         : type(LEX_STRING) {
     cpy(x);
 }
@@ -75,12 +75,12 @@ Data::Data(const Data& src)
     }
 }
 
-Data::Data(const Lex& lex) {
+Data::Data(Lex lex) {
     type = lex.type;
     switch (lex.type) {
         case LEX_NUM:      val.i = stoi(lex.str); break;
-        case LEX_REAL_NUM: val.d = stod(lex.str);break;
-        case LEX_STRING:   cpy(lex.str);break;
+        case LEX_REAL_NUM: val.d = stod(lex.str); break;
+        case LEX_STRING:   cpy(lex.str);          break;
         default:           throw "unknown type";
     }
 }
@@ -193,6 +193,109 @@ Data Data::operator=(const Data& src) {
     }
 }
 
+Data Data::operator+(const Data& src) {
+    if (type == LEX_STRING && src.type == LEX_STRING)
+        return string(*this) + string(src);
+    if (type == LEX_NUM && src.type == LEX_NUM) {
+        return int(*this) + int(src);
+    }
+    double answer = (this->type == LEX_INT? int(*this) : double(*this));
+    return answer + (src.type == LEX_INT? int(src) : double(src));
+}
 
+Data Data::operator-(const Data& src) {
+    if (type == LEX_NUM && src.type == LEX_NUM) {
+        return int(*this) - int(src);
+    }
+    double answer = (this->type == LEX_INT? int(*this) : double(*this));
+    return answer - (src.type == LEX_INT? int(src) : double(src));
+}
 
+Data Data::operator*(const Data& src) {
+    if (type == LEX_NUM && src.type == LEX_NUM) {
+        return int(*this) * int(src);
+    }
+    double answer = (this->type == LEX_INT? int(*this) : double(*this));
+    return answer * (src.type == LEX_INT? int(src) : double(src));
+}
+
+Data Data::operator/(const Data& src) {
+    if (type == LEX_NUM && src.type == LEX_NUM) {
+        return int(*this) / int(src);
+    }
+    double answer = (this->type == LEX_INT? int(*this) : double(*this));
+    return answer / (src.type == LEX_INT? int(src) : double(src));
+}
+
+Data Data::operator<(const Data& src) {
+    if (type == LEX_STRING && src.type == LEX_STRING)
+        return strcmp(val.s, src.val.s) < 0;
+    if (type == LEX_NUM && src.type == LEX_NUM) {
+        return int(*this) < int(src);
+    }
+    double answer = (type == LEX_INT? int(*this) : double(*this));
+    return answer < (src.type == LEX_INT? int(src) : double(src));
+}
+
+Data Data::operator>(const Data& src) {
+    if (type == LEX_STRING && src.type == LEX_STRING)
+        return strcmp(val.s, src.val.s) > 0;
+    if (type == LEX_NUM && src.type == LEX_NUM) {
+        return int(*this) < int(src);
+    }
+    double answer = (type == LEX_INT? int(*this) : double(*this));
+    return answer > (src.type == LEX_INT? int(src) : double(src));
+}
+
+Data Data::operator<=(const Data& src) {
+    if (type == LEX_STRING && src.type == LEX_STRING)
+        return strcmp(val.s, src.val.s) <= 0;
+    if (type == LEX_NUM && src.type == LEX_NUM) {
+        return int(*this) < int(src);
+    }
+    double answer = (type == LEX_INT? int(*this) : double(*this));
+    return answer <= (src.type == LEX_INT? int(src) : double(src));
+}
+
+Data Data::operator>=(const Data& src) {
+    if (type == LEX_STRING && src.type == LEX_STRING)
+        return strcmp(val.s, src.val.s) >= 0;
+    if (type == LEX_NUM && src.type == LEX_NUM) {
+        return int(*this) < int(src);
+    }
+    double answer = (type == LEX_INT? int(*this) : double(*this));
+    return answer >= (src.type == LEX_INT? int(src) : double(src));
+}
+
+Data Data::operator==(const Data& src) {
+    if (type == LEX_STRING && src.type == LEX_STRING)
+        return strcmp(val.s, src.val.s) == 0;
+    if (type == LEX_NUM && src.type == LEX_NUM) {
+        return int(*this) < int(src);
+    }
+    double answer = (type == LEX_INT? int(*this) : double(*this));
+    return answer == (src.type == LEX_INT? int(src) : double(src));
+}
+
+Data Data::operator!=(const Data& src) {
+    if (type == LEX_STRING && src.type == LEX_STRING)
+        return strcmp(val.s, src.val.s) != 0;
+    if (type == LEX_NUM && src.type == LEX_NUM) {
+        return int(*this) < int(src);
+    }
+    double answer = (type == LEX_INT? int(*this) : double(*this));
+    return answer != (src.type == LEX_INT? int(src) : double(src));
+}
+
+Data Data::operator&&(const Data& src) {
+    return int(*this) && int(src);
+}
+
+Data Data::operator||(const Data& src) {
+    return int(*this) || int(src);
+}
+
+Data Data::operator!() {
+    return !(int(*this));
+}
 } //namespace
