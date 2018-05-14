@@ -9,6 +9,10 @@ Context::Context(map<string, Data>vars)
         , commandIndex(0)
 {   }
 
+void PolizPop::execute(Context& cont) {
+    cont.st.pop();
+}
+
 void PolizRead::execute(Context& cont) {
     string name = cont.st.top();
     cont.st.pop();
@@ -35,8 +39,10 @@ void PolizExpr::execute(Context& cont) {
     } else {
         Data d1 = cont.st.top();
         cont.st.pop();
-        if (type == LEX_ASSIGN)
+        // cout << d1;
+        if (type == LEX_ASSIGN) {
             cont.st.push(cont.vars[d1] = d2);
+        }
         else if (type == LEX_PLUS)
             cont.st.push(d1 + d2);
         else if (type == LEX_MINUS)
@@ -62,5 +68,16 @@ void PolizExpr::execute(Context& cont) {
         else if (type == LEX_OR)
             cont.st.push(d1 || d2);
     }
+}
+
+void PolizIfNotJump::execute(Context& cont) {
+    int result = cont.st.top();
+    cont.st.pop();
+    if (!result)
+        cont.commandIndex = jump;
+}
+
+void PolizJump::execute(Context& cont) {
+    cont.commandIndex = jump;
 }
 }//namespace

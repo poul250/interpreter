@@ -93,64 +93,77 @@ Data::~Data() {
 LexType Data::compatible(LexType t1, LexType op, LexType t2) {
     switch (op) {
     case LEX_ASSIGN:
-        switch (t1) {
-        case LEX_NUM:
-            switch (t2) {
-            case LEX_NUM:      return LEX_NUM;
-            case LEX_REAL_NUM: return LEX_NUM;
-            case LEX_STRING:   throw "incompatible types: int and string";
-            default:           throw "unknown type";
-            }
-        case LEX_REAL_NUM:
-            switch (t2) {
-            case LEX_NUM:      return LEX_REAL_NUM;
-            case LEX_REAL_NUM: return LEX_REAL_NUM;
-            case LEX_STRING:   throw "incompatible types: real and string";
-            default:           throw "unknown type";
-            }
-        case LEX_STRING:
-            switch (t2) {
-            case LEX_NUM:      throw "incompatible types: string and int";
-            case LEX_REAL_NUM: throw "incompatible types: string and real";
-            case LEX_STRING:   return LEX_STRING;
-            default:           throw "unknown type";
-            }
-        default:
-            throw "unknown type";
-        }
+        if (t1 == LEX_STRING && t2 == LEX_STRING)
+            return LEX_STRING;
+        else if (t1 == LEX_NUM && t2 != LEX_STRING)
+            return LEX_NUM;
+        else if (t1 == LEX_REAL_NUM && t2 != LEX_STRING)
+            return LEX_REAL_NUM;
+        else
+            throw "incompatible types";
     case LEX_PLUS:
+        if (t1 == LEX_STRING && t2 == LEX_STRING)
+            return LEX_STRING;
+        else if (t1 == LEX_NUM && t2 == LEX_NUM)
+            return LEX_NUM;
+        else if (t1 != LEX_STRING && t2 != LEX_STRING)
+            return LEX_REAL_NUM;
+        else
+            throw "incompatible types";
     case LEX_MINUS:
     case LEX_DIV:
     case LEX_MUL:
-        switch (t1) {
-        case LEX_NUM:
-            switch (t2) {
-            case LEX_NUM:      return LEX_NUM;
-            case LEX_REAL_NUM: return LEX_REAL_NUM;
-            case LEX_STRING:   throw "incompatible types: int and string";
-            default:           throw "unknown type";
-            }
-        case LEX_REAL_NUM:
-            switch (t2) {
-            case LEX_NUM:      return LEX_REAL_NUM;
-            case LEX_REAL_NUM: return LEX_REAL_NUM;
-            case LEX_STRING:   throw "incompatible types: int and string";
-            default:           throw "unknown type";
-            }
-        case LEX_STRING:
-            switch (t2) {
-            case LEX_NUM:      throw "incompatible types: string and int";
-            case LEX_REAL_NUM: throw "incompatible types: string and real";
-            case LEX_STRING:   return LEX_STRING;
-            default:           throw "unknown type";
-            }
-        }
+        if (t1 == LEX_NUM && t2 == LEX_NUM)
+            return LEX_NUM;
+        else if (t1 != LEX_STRING && t2 != LEX_STRING)
+            return LEX_REAL_NUM;
+        else
+            throw "incompatible types";
+    case LEX_LESS:
+    case LEX_GREATER:
+    case LEX_EQ:
+    case LEX_NE:
+    case LEX_LE:
+    case LEX_GE:
+    case LEX_AND:
+    case LEX_OR:
+        if (t1 != LEX_NUM || t2 != LEX_NUM)
+            throw "incompatible types";
+        return LEX_INT;
+    case LEX_NOT:
+        if (t2 != LEX_NUM)
+            throw "incompatible types";
+        return LEX_INT;
     }
 }
 
 void Data::cpy(const string& src) {
     val.s = new char[src.size() + 1];
     strcpy(val.s, src.c_str());
+}
+
+Data::operator int() const {
+    if (type == LEX_NUM)
+        return val.i;
+    else if (type == LEX_REAL_NUM)
+        return val.d;
+    else if (type == LEX_STRING)
+        throw "bad cast to int";
+}
+Data::operator double() const {
+    if (type == LEX_NUM)
+        return val.i;
+    else if (type == LEX_REAL_NUM)
+        return val.d;
+    else if (type == LEX_STRING)
+        throw "bad cast to double";
+}
+Data::operator string() const {
+    // cout << *this;
+    if (type == LEX_NUM || type == LEX_REAL_NUM)
+        throw "bad cast to sring";
+    else if (type == LEX_STRING)
+        return val.s;
 }
 
 // void Data::cpy(const char* src) {
@@ -194,108 +207,101 @@ Data Data::operator=(const Data& src) {
 }
 
 Data Data::operator+(const Data& src) {
-    if (type == LEX_STRING && src.type == LEX_STRING)
+    LexType t = compatible(type, LEX_ASSIGN, src.type);
+    if (t == LEX_STRING)
         return string(*this) + string(src);
-    if (type == LEX_NUM && src.type == LEX_NUM) {
+    else if (t == LEX_NUM)
         return int(*this) + int(src);
-    }
-    double answer = (this->type == LEX_INT? int(*this) : double(*this));
-    return answer + (src.type == LEX_INT? int(src) : double(src));
+    return double(*this) + double(src);
 }
 
 Data Data::operator-(const Data& src) {
-    if (type == LEX_NUM && src.type == LEX_NUM) {
+    LexType t = compatible(type, LEX_MINUS, src.type);
+    if (t == LEX_NUM)
         return int(*this) - int(src);
-    }
-    double answer = (this->type == LEX_INT? int(*this) : double(*this));
-    return answer - (src.type == LEX_INT? int(src) : double(src));
+    return double(*this) - double(src);
 }
 
 Data Data::operator*(const Data& src) {
-    if (type == LEX_NUM && src.type == LEX_NUM) {
+    LexType t = compatible(type, LEX_MUL, src.type);
+    if (t == LEX_NUM)
         return int(*this) * int(src);
-    }
-    double answer = (this->type == LEX_INT? int(*this) : double(*this));
-    return answer * (src.type == LEX_INT? int(src) : double(src));
+    return double(*this) * double(src);
 }
 
 Data Data::operator/(const Data& src) {
-    if (type == LEX_NUM && src.type == LEX_NUM) {
+    LexType t = compatible(type, LEX_DIV, src.type);
+    if (t == LEX_NUM)
         return int(*this) / int(src);
-    }
-    double answer = (this->type == LEX_INT? int(*this) : double(*this));
-    return answer / (src.type == LEX_INT? int(src) : double(src));
+    return double(*this) / double(src);
 }
 
 Data Data::operator<(const Data& src) {
+    compatible(type, LEX_LESS, src.type);
     if (type == LEX_STRING && src.type == LEX_STRING)
         return strcmp(val.s, src.val.s) < 0;
-    if (type == LEX_NUM && src.type == LEX_NUM) {
+    if (type == LEX_NUM && src.type == LEX_NUM)
         return int(*this) < int(src);
-    }
-    double answer = (type == LEX_INT? int(*this) : double(*this));
-    return answer < (src.type == LEX_INT? int(src) : double(src));
+    return double(*this) < double(src);
 }
 
 Data Data::operator>(const Data& src) {
+    compatible(type, LEX_GREATER, src.type);
     if (type == LEX_STRING && src.type == LEX_STRING)
         return strcmp(val.s, src.val.s) > 0;
-    if (type == LEX_NUM && src.type == LEX_NUM) {
-        return int(*this) < int(src);
-    }
-    double answer = (type == LEX_INT? int(*this) : double(*this));
-    return answer > (src.type == LEX_INT? int(src) : double(src));
+    if (type == LEX_NUM && src.type == LEX_NUM)
+        return int(*this) > int(src);
+    return double(*this) > double(src);
 }
 
 Data Data::operator<=(const Data& src) {
+    compatible(type, LEX_LE, src.type);
     if (type == LEX_STRING && src.type == LEX_STRING)
         return strcmp(val.s, src.val.s) <= 0;
-    if (type == LEX_NUM && src.type == LEX_NUM) {
-        return int(*this) < int(src);
-    }
-    double answer = (type == LEX_INT? int(*this) : double(*this));
-    return answer <= (src.type == LEX_INT? int(src) : double(src));
+    if (type == LEX_NUM && src.type == LEX_NUM)
+        return int(*this) <= int(src);
+    return double(*this) <= double(src);
 }
 
 Data Data::operator>=(const Data& src) {
+    compatible(type, LEX_GE, src.type);
     if (type == LEX_STRING && src.type == LEX_STRING)
         return strcmp(val.s, src.val.s) >= 0;
-    if (type == LEX_NUM && src.type == LEX_NUM) {
-        return int(*this) < int(src);
-    }
-    double answer = (type == LEX_INT? int(*this) : double(*this));
-    return answer >= (src.type == LEX_INT? int(src) : double(src));
+    if (type == LEX_NUM && src.type == LEX_NUM)
+        return int(*this) >= int(src);
+    return double(*this) >= double(src);
 }
 
 Data Data::operator==(const Data& src) {
+    compatible(type, LEX_EQ, src.type);
     if (type == LEX_STRING && src.type == LEX_STRING)
         return strcmp(val.s, src.val.s) == 0;
-    if (type == LEX_NUM && src.type == LEX_NUM) {
-        return int(*this) < int(src);
-    }
-    double answer = (type == LEX_INT? int(*this) : double(*this));
-    return answer == (src.type == LEX_INT? int(src) : double(src));
+    if (type == LEX_NUM && src.type == LEX_NUM)
+        return int(*this) == int(src);
+    return double(*this) == double(src);
 }
 
 Data Data::operator!=(const Data& src) {
+    compatible(type, LEX_NE, src.type);
     if (type == LEX_STRING && src.type == LEX_STRING)
         return strcmp(val.s, src.val.s) != 0;
-    if (type == LEX_NUM && src.type == LEX_NUM) {
-        return int(*this) < int(src);
-    }
-    double answer = (type == LEX_INT? int(*this) : double(*this));
-    return answer != (src.type == LEX_INT? int(src) : double(src));
+    if (type == LEX_NUM && src.type == LEX_NUM)
+        return int(*this) != int(src);
+    return double(*this) != double(src);
 }
 
 Data Data::operator&&(const Data& src) {
+    compatible(type, LEX_AND, src.type);
     return int(*this) && int(src);
 }
 
 Data Data::operator||(const Data& src) {
+    compatible(type, LEX_OR, src.type);
     return int(*this) || int(src);
 }
 
 Data Data::operator!() {
+    compatible(LEX_NULL, LEX_NOT, type);
     return !(int(*this));
 }
 } //namespace

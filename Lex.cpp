@@ -31,7 +31,7 @@ ostream& operator<< (ostream& stream, Lex lex) {
 		names[24] = "LEX_WRITE     ";
 		names[25] = "LEX_IF        ";
 		names[26] = "LEX_ELSE      ";
-		names[27] = "LEX_FOR       ";
+		names[27] = "LEX_DO        ";
 		names[28] = "LEX_BREAK     ";
 		names[29] = "LEX_NOT       ";
 		names[30] = "LEX_AND       ";
@@ -55,7 +55,7 @@ void LexAnalizer::init() {
 	TW[string("write"  )] = LEX_WRITE;
 	TW[string("if"     )] = LEX_IF;
 	TW[string("else"   )] = LEX_ELSE;
-	TW[string("for"    )] = LEX_FOR;
+	TW[string("do"     )] = LEX_DO;
 	TW[string("break"  )] = LEX_BREAK;
 	TW[string("not"    )] = LEX_NOT;
 	TW[string("and"    )] = LEX_AND;

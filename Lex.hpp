@@ -17,7 +17,7 @@ enum LexType {
 	LEX_LESS     /* <  */, LEX_GREATER   /* >  */,
 	LEX_EQ       /* == */, LEX_NE        /* != */,
 	LEX_LE       /* <= */, LEX_GE        /* >= */,
-	LEX_PROGRAM, LEX_READ, LEX_WRITE, LEX_IF, LEX_ELSE, LEX_FOR, LEX_BREAK,
+	LEX_PROGRAM, LEX_READ, LEX_WRITE, LEX_IF, LEX_ELSE, LEX_DO, LEX_BREAK,
 	LEX_NOT, LEX_AND, LEX_OR, LEX_INT, LEX_STR, LEX_REAL, LEX_WHILE
 };
 

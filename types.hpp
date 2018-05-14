@@ -41,9 +41,9 @@ public:
     double getD() const { return val.d; }
     string getS() const { return val.s; }
 
-    operator int() const { return val.i; }
-    operator double() const { return val.d; }
-    operator string() const { return val.s; }
+    operator int() const;
+    operator double() const;
+    operator string() const;
 
     friend ostream& operator<<(ostream&, const Data&);
     friend istream& operator>>(istream&, Data&);
