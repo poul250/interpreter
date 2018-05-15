@@ -35,7 +35,7 @@ istream& operator>>(istream& stream, Data& data) {
 Data::Data(LexType type)
         : type(type) {
     if (type == LEX_NULL)
-        val.i = 0;
+        val.s = nullptr;
     else if (type == LEX_STRING)
         cpy("");
     else if (type == LEX_NUM)
@@ -66,17 +66,20 @@ Data::Data(const char* x)
 
 Data::Data(const Data& src)
         : type(src.type) {
-    if (src.type == LEX_NUM) {
+    if (type == LEX_NUM) {
         val.i = src.val.i;
-    } else if (src.type == LEX_REAL_NUM) {
+    } else if (type == LEX_REAL_NUM) {
         val.d = src.val.d;
-    } else if (src.type == LEX_STRING) {
+    } else if (type == LEX_STRING) {
+        // cout << src.val.s << "  ";
         cpy(src.val.s);
+        // cout << val.s;
     }
 }
 
-Data::Data(Lex lex) {
-    type = lex.type;
+Data::Data(Lex lex)
+        :type(lex.type) {
+    // cout << lex.str;
     switch (lex.type) {
         case LEX_NUM:      val.i = stoi(lex.str); break;
         case LEX_REAL_NUM: val.d = stod(lex.str); break;
@@ -95,7 +98,7 @@ LexType Data::compatible(LexType t1, LexType op, LexType t2) {
     case LEX_ASSIGN:
         if (t1 == LEX_STRING && t2 == LEX_STRING)
             return LEX_STRING;
-        else if (t1 == LEX_NUM && t2 != LEX_STRING)
+        else if ((t1 == LEX_NUM) && (t2 != LEX_STRING))
             return LEX_NUM;
         else if (t1 == LEX_REAL_NUM && t2 != LEX_STRING)
             return LEX_REAL_NUM;
@@ -129,16 +132,16 @@ LexType Data::compatible(LexType t1, LexType op, LexType t2) {
     case LEX_OR:
         if (t1 != LEX_NUM || t2 != LEX_NUM)
             throw "incompatible types";
-        return LEX_INT;
+        return LEX_NUM;
     case LEX_NOT:
         if (t2 != LEX_NUM)
             throw "incompatible types";
-        return LEX_INT;
+        return LEX_NUM;
     }
 }
 
 void Data::cpy(const string& src) {
-    val.s = new char[src.size() + 1];
+    val.s = new char[src.length() + 1];
     strcpy(val.s, src.c_str());
 }
 
@@ -159,7 +162,6 @@ Data::operator double() const {
         throw "bad cast to double";
 }
 Data::operator string() const {
-    // cout << *this;
     if (type == LEX_NUM || type == LEX_REAL_NUM)
         throw "bad cast to sring";
     else if (type == LEX_STRING)
@@ -180,27 +182,30 @@ Data Data::operator=(const Data& src) {
                 case LEX_NUM:      return val.i = src.val.i;
                 case LEX_REAL_NUM: return val.d = src.val.d;
                 case LEX_STRING:   cpy(src.val.s); return *this;
+                default:           throw "?????";
             }
         case LEX_NUM:
             switch (src.type) {
                 case LEX_NUM:      return val.i = src.val.i;
                 case LEX_REAL_NUM: return val.i = src.val.d;
-                default: throw "runtime error: incompatible types";
+                default: throw "runtime error: incompatible types NUM";
             }
         case LEX_REAL_NUM:
             switch (src.type) {
                 case LEX_NUM: return val.d = src.val.i;
                 case LEX_REAL_NUM: return val.d = src.val.d;
-                default: throw "runtime error: incompatible types";
+                default: throw "runtime error: incompatible types REAL_NUM";
             }
         case LEX_STRING:
             switch (src.type) {
                 case LEX_NUM:
                 case LEX_REAL_NUM:
-                    throw "runtime error: uncompatible types";
+                    throw "runtime error: uncompatible types STRING";
                 case LEX_STRING:
+                    // cout << "   here      ";
                     delete[] val.s;
                     cpy(src.val.s);
+                    // cout << val.s;
                     return src.val.s;
             }
     }

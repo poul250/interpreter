@@ -43,7 +43,7 @@ void Interpretator::Inerpretate() {
 		Descriptions();
 		Operators();
 		checkLex(LEX_NULL);
-		cout << "Success" << endl;
+		cout << "------------------Success-------------------" << endl;
 	} catch (Lex lex) {
 		if (lex.type == LEX_NULL)
 			cout << "Error: Unexpected end of file" << endl;
@@ -98,7 +98,6 @@ void Interpretator::ReadId(LexType type) {
 		throw "variable \"" + lex.str + "\" has already been declared";
 
 	string name = lex.str;
-
 	data[name] = Data(type);
 	switch(getLex()) {
 		case LEX_COMMA:
@@ -177,6 +176,7 @@ void Interpretator::WriteFunc() {
 		getLex();
 		st = stack<Lex>();
 		Expression();
+		// cout << st.top();
 		ops.push_back(new PolizWrite());
 	} while (lex.type == LEX_COMMA);
 	checkLex(LEX_CL_ROUND);
