@@ -79,7 +79,6 @@ Data::Data(const Data& src)
 
 Data::Data(Lex lex)
         :type(lex.type) {
-    // cout << lex.str;
     switch (lex.type) {
         case LEX_NUM:      val.i = stoi(lex.str); break;
         case LEX_REAL_NUM: val.d = stod(lex.str); break;
@@ -89,8 +88,8 @@ Data::Data(Lex lex)
 }
 
 Data::~Data() {
-    if (type == LEX_STRING)
-        delete[] val.s;
+    // if (type == LEX_STRING && val.s != nullptr)
+        // delete[] val.s;
 }
 
 LexType Data::compatible(LexType t1, LexType op, LexType t2) {
@@ -141,8 +140,9 @@ LexType Data::compatible(LexType t1, LexType op, LexType t2) {
 }
 
 void Data::cpy(const string& src) {
-    val.s = new char[src.length() + 1];
-    strcpy(val.s, src.c_str());
+    const char* str = src.c_str();
+    val.s = new char[strlen(str) + 1];
+    strcpy(val.s, str);
 }
 
 Data::operator int() const {
@@ -165,7 +165,7 @@ Data::operator string() const {
     if (type == LEX_NUM || type == LEX_REAL_NUM)
         throw "bad cast to sring";
     else if (type == LEX_STRING)
-        return val.s;
+        return string(val.s);
 }
 
 // void Data::cpy(const char* src) {
@@ -202,10 +202,8 @@ Data Data::operator=(const Data& src) {
                 case LEX_REAL_NUM:
                     throw "runtime error: uncompatible types STRING";
                 case LEX_STRING:
-                    // cout << "   here      ";
                     delete[] val.s;
                     cpy(src.val.s);
-                    // cout << val.s;
                     return src.val.s;
             }
     }

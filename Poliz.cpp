@@ -25,12 +25,8 @@ void PolizWrite::execute(Context& cont) {
 }
 
 void PolizData::execute(Context& cont) {
-    // cout << "         here    ";
-    if (var) {
-        cout << data << "  " << cont.vars[data];
+    if (var)
         cont.st.push(cont.vars[string(data)]);
-        // cout << data;
-    }
     else
         cont.st.push(data);
 }

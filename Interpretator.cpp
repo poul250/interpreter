@@ -125,7 +125,7 @@ void Interpretator::ReadValue(const string& name, LexType type) {
 		}
 	}
 	Data::compatible(type, LEX_ASSIGN, lex.type);
-	data[name] = lex;
+	data[name] = Data(lex);
 	switch (getLex()) {
 		case LEX_COMMA:     ReadId(type); break;
 		case LEX_SEMICOLON: getLex();     break;
@@ -324,7 +324,6 @@ void Interpretator::Expression() {
 }
 
 void Interpretator::AssignOp(int shift) {
-	// cout << shift;
 	LexType t2 = getType(st.top());
 	st.pop();
 	Lex l1 = st.top();
