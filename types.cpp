@@ -88,8 +88,8 @@ Data::Data(Lex lex)
 }
 
 Data::~Data() {
-    // if (type == LEX_STRING && val.s != nullptr)
-        // delete[] val.s;
+    if (type == LEX_STRING)
+        delete[] val.s;
 }
 
 LexType Data::compatible(LexType t1, LexType op, LexType t2) {

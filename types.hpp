@@ -49,7 +49,7 @@ public:
     friend istream& operator>>(istream&, Data&);
 private:
     void cpy(const string&);
-    // void cpy(const char&);
+    // void cpy(const char*);
 
     LexType type;
     Value val;

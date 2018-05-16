@@ -176,7 +176,6 @@ void Interpretator::WriteFunc() {
 		getLex();
 		st = stack<Lex>();
 		Expression();
-		// cout << st.top();
 		ops.push_back(new PolizWrite());
 	} while (lex.type == LEX_COMMA);
 	checkLex(LEX_CL_ROUND);

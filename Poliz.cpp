@@ -4,7 +4,7 @@ using namespace std;
 
 namespace Pawka {
 
-Context::Context(map<string, Data>vars)
+Context::Context(map<string, Data>&vars)
         : vars(vars)
         , commandIndex(0)
 {   }

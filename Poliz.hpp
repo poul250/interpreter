@@ -12,7 +12,7 @@ using namespace std;
 namespace Pawka {
 
 struct Context {
-	Context(map<string, Data>);
+	Context(map<string, Data>&);
 
 	stack<Data> st;
 	map<string, Data>& vars;
