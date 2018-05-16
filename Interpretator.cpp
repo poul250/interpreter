@@ -60,16 +60,16 @@ void Interpretator::Inerpretate() {
 	} catch (char const* s) {
 		cout << "Error: Line " << la.getLine() << ", " << s << endl;
 		return;
-	}catch (out_of_range) {
+	} catch (out_of_range) {
 		cout << "Error: Line " << la.getLine() << ", " << "out of range" <<endl;
 		return;
 	}
 
     try {
     	execute();
-	} catch (char const* s) {
-		cout << s << endl;
-	}
+    } catch (char const* s) {
+	cout << s << endl;
+    }
 }
 
 void Interpretator::execute() {
@@ -77,7 +77,6 @@ void Interpretator::execute() {
 	while (cont.commandIndex < ops.size()) {
 		PolizOp* op = ops[cont.commandIndex];
 		cont.commandIndex++;
-		// cout << "------" << cont.st.size() << "------" << endl;
 		op->execute(cont);
 	}
 }
@@ -377,8 +376,7 @@ void Interpretator::AndOp() {
 void Interpretator::Relation() {
 	Sum();
 	if (lex.type == LEX_LESS || lex.type == LEX_GREATER || lex.type == LEX_LE ||
-			lex.type == LEX_GE || lex.type == LEX_EQ || lex.type == LEX_NE)
-	{
+			lex.type == LEX_GE || lex.type == LEX_EQ || lex.type == LEX_NE) {
 		LexType t = lex.type;
 		getLex();
 		Sum();
@@ -444,8 +442,7 @@ void Interpretator::Not() {
 		getLex();
 		Atom();
 		NotOp(t);
-	}
-	else {
+	} else {
 		Atom();
 	}
 }
