@@ -6,7 +6,6 @@
 #include <stack>
 #include "Lex.hpp"
 #include "Poliz.hpp"
-#include "utils.hpp"
 #include "types.hpp"
 
 namespace Pawka {
