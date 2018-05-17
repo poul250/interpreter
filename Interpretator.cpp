@@ -437,7 +437,7 @@ void Interpretator::PrOp(LexType type) {
 void Interpretator::Not() {
 	if (lex.type == LEX_PLUS || lex.type == LEX_MINUS || lex.type == LEX_NOT) {
 		LexType t = lex.type;
-		if (t == LEX_MINUS)
+		if (t == LEX_MINUS || t == LEX_PLUS)
 			ops.push_back(new PolizData(0));
 		getLex();
 		Atom();
@@ -450,12 +450,8 @@ void Interpretator::Not() {
 void Interpretator::NotOp(LexType type) {
 	LexType t = getType(st.top());
 	st.pop();
-	if (t != LEX_NUM)
-		throw "incompatible types of operands";
-	if (type == LEX_MINUS || type == LEX_NOT)
-		ops.push_back(new PolizExpr(type));
-	ops.push_back(new PolizExpr(LEX_NOT));
-	st.push(Lex(LEX_NUM));
+	ops.push_back(new PolizExpr(type));
+	st.push(Data::compatible(LEX_NUM, type, t));
 }
 
 void Interpretator::Atom() {

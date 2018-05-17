@@ -60,22 +60,19 @@ private:
 	LexType type;
 };
 
-class PolizIfNotJump : public PolizOp {
-public:
-	virtual void execute(Context&) override;
-	PolizIfNotJump(int j = 0) : jump(j) { }
-	void setJump(int j) { jump = j; }
-private:
-	int jump;
-};
-
 class PolizJump : public PolizOp {
 public:
 	virtual void execute(Context&) override;
 	PolizJump(int j = 0) : jump(j) { }
 	void setJump(int j) { jump = j; }
-private:
+protected:
 	int jump;
+};
+
+class PolizIfNotJump : public PolizJump {
+public:
+	virtual void execute(Context&) override;
+	PolizIfNotJump(int j = 0) : PolizJump(j) { }
 };
 
 }// namespace

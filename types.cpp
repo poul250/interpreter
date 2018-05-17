@@ -97,7 +97,7 @@ LexType Data::compatible(LexType t1, LexType op, LexType t2) {
     case LEX_ASSIGN:
         if (t1 == LEX_STRING && t2 == LEX_STRING)
             return LEX_STRING;
-        else if ((t1 == LEX_NUM) && (t2 != LEX_STRING))
+        else if (t1 == LEX_NUM && t2 != LEX_STRING)
             return LEX_NUM;
         else if (t1 == LEX_REAL_NUM && t2 != LEX_STRING)
             return LEX_REAL_NUM;
@@ -127,6 +127,10 @@ LexType Data::compatible(LexType t1, LexType op, LexType t2) {
     case LEX_NE:
     case LEX_LE:
     case LEX_GE:
+        if (int(t1 == LEX_STRING) + int(t2 == LEX_STRING) == 1)
+            throw "incompatible types";
+        else
+            return LEX_INT;
     case LEX_AND:
     case LEX_OR:
         if (t1 != LEX_NUM || t2 != LEX_NUM)
