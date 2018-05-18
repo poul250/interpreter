@@ -130,7 +130,7 @@ LexType Data::compatible(LexType t1, LexType op, LexType t2) {
         if (int(t1 == LEX_STRING) + int(t2 == LEX_STRING) == 1)
             throw "incompatible types";
         else
-            return LEX_INT;
+            return LEX_NUM;
     case LEX_AND:
     case LEX_OR:
         if (t1 != LEX_NUM || t2 != LEX_NUM)

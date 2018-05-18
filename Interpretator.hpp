@@ -23,6 +23,7 @@ private:
 	void ReadId(LexType);
 	void ReadValue(const string&, LexType);
 	void Operators();
+	void OneOperator();
 	void Operator();
 	void IfBlock(); //+
 	void DoWhileBlock(); //+
@@ -35,20 +36,16 @@ private:
 	//Expression states
 	void Expression();
 	void Assign();
-	void AssignOp(int);
 	void Or();
-	void OrOp();
 	void And();
-	void AndOp();
 	void Relation();
-	void RelationOp(LexType);
 	void Sum();
-	void SumOp(LexType);
 	void Pr();
-	void PrOp(LexType);
 	void Not();
-	void NotOp(LexType);
 	void Atom();
+	void AssignOp(int);
+	void NotOp(LexType);
+	void ExprOp(LexType);
 
 	bool inline declared(const string&);
 	void inline checkLex(LexType);
@@ -60,8 +57,8 @@ private:
 	LexAnalizer la;
 	Lex lex;
 
-	map<string, Data> data;
-	stack<Lex> st;
+	map<string, Data> vars;
+	stack<Lex> typesStack;
 	stack<vector<PolizJump*>*> whileExits;
 	vector<PolizOp*> ops;
 };

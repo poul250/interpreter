@@ -4,42 +4,42 @@ namespace Pawka {
 ostream& operator<< (ostream& stream, Lex lex) {
 	static const char* names[36] { nullptr };
     if( names[0] == nullptr ) {
-		names[0]  = "LEX_NULL      ";
-		names[1]  = "LEX_ID        ";
-		names[2]  = "LEX_NUM       ";
-		names[3]  = "LEX_REAL_NUM  ";
-		names[4]  = "LEX_STRING    ";
-		names[5]  = "LEX_OP_BRACE  ";
-		names[6]  = "LEX_CL_BRACE  ";
-		names[7]  = "LEX_ASSIGN    ";
-		names[8]  = "LEX_OP_ROUND  ";
-		names[9]  = "LEX_CL_ROUND  ";
-		names[10] = "LEX_COMMA     ";
-		names[11] = "LEX_SEMICOLON ";
-		names[12] = "LEX_PLUS      ";
-		names[13] = "LEX_MINUS     ";
-		names[14] = "LEX_MUL       ";
-		names[15] = "LEX_DIV       ";
-		names[16] = "LEX_LESS      ";
-		names[17] = "LEX_GREATER   ";
-		names[18] = "LEX_EQ        ";
-		names[19] = "LEX_NE        ";
-		names[20] = "LEX_LE        ";
-		names[21] = "LEX_GE        ";
-		names[22] = "LEX_PROGRAM   ";
-		names[23] = "LEX_READ      ";
-		names[24] = "LEX_WRITE     ";
-		names[25] = "LEX_IF        ";
-		names[26] = "LEX_ELSE      ";
-		names[27] = "LEX_DO        ";
-		names[28] = "LEX_BREAK     ";
-		names[29] = "LEX_NOT       ";
-		names[30] = "LEX_AND       ";
-		names[31] = "LEX_OR        ";
-		names[32] = "LEX_INT       ";
-		names[33] = "LEX_STR       ";
-		names[34] = "LEX_REAL      ";
-		names[35] = "LEX_WHILE     ";
+		names[LEX_NULL     ] = "LEX_NULL      ";
+		names[LEX_ID       ] = "LEX_ID        ";
+		names[LEX_NUM      ] = "LEX_NUM       ";
+		names[LEX_REAL_NUM ] = "LEX_REAL_NUM  ";
+		names[LEX_STRING   ] = "LEX_STRING    ";
+		names[LEX_OP_BRACE ] = "LEX_OP_BRACE  ";
+		names[LEX_CL_BRACE ] = "LEX_CL_BRACE  ";
+		names[LEX_ASSIGN   ] = "LEX_ASSIGN    ";
+		names[LEX_OP_ROUND ] = "LEX_OP_ROUND  ";
+		names[LEX_CL_ROUND ] = "LEX_CL_ROUND  ";
+		names[LEX_COMMA    ] = "LEX_COMMA     ";
+		names[LEX_SEMICOLON] = "LEX_SEMICOLON ";
+		names[LEX_PLUS     ] = "LEX_PLUS      ";
+		names[LEX_MINUS    ] = "LEX_MINUS     ";
+		names[LEX_MUL      ] = "LEX_MUL       ";
+		names[LEX_DIV      ] = "LEX_DIV       ";
+		names[LEX_LESS     ] = "LEX_LESS      ";
+		names[LEX_GREATER  ] = "LEX_GREATER   ";
+		names[LEX_EQ       ] = "LEX_EQ        ";
+		names[LEX_NE       ] = "LEX_NE        ";
+		names[LEX_LE       ] = "LEX_LE        ";
+		names[LEX_GE       ] = "LEX_GE        ";
+		names[LEX_PROGRAM  ] = "LEX_PROGRAM   ";
+		names[LEX_READ     ] = "LEX_READ      ";
+		names[LEX_WRITE    ] = "LEX_WRITE     ";
+		names[LEX_IF       ] = "LEX_IF        ";
+		names[LEX_ELSE     ] = "LEX_ELSE      ";
+		names[LEX_DO       ] = "LEX_DO        ";
+		names[LEX_BREAK    ] = "LEX_BREAK     ";
+		names[LEX_NOT      ] = "LEX_NOT       ";
+		names[LEX_AND      ] = "LEX_AND       ";
+		names[LEX_OR       ] = "LEX_OR        ";
+		names[LEX_INT      ] = "LEX_INT       ";
+		names[LEX_STR      ] = "LEX_STR       ";
+		names[LEX_REAL     ] = "LEX_REAL      ";
+		names[LEX_WHILE    ] = "LEX_WHILE     ";
 	}
 
 	stream << names[lex.type] << lex.str;
@@ -78,8 +78,7 @@ bool LexAnalizer::moveNext() {
 
 	buf.clear();
 	state = &LexAnalizer::FirstSym;
-	while ((this->*state)(get()))
-	{ }
+	while ((this->*state)(get())) { }
 
 	return lex.type != LEX_NULL;
 }
