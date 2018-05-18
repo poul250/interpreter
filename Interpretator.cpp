@@ -37,7 +37,7 @@ LexType Interpretator::getLex(LexType type) {
 	return lex.type;
 }
 
-void Interpretator::Inerpretate() {
+void Interpretator::Interpretate() {
 	try {
 		getLex(LEX_PROGRAM);
 		getLex(LEX_OP_BRACE);

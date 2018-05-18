@@ -15,7 +15,7 @@ public:
 	Interpretator(istream& stream);
 	~Interpretator();
 
-	void Inerpretate();
+	void Interpretate();
 private:
 
 	//Program states
@@ -25,13 +25,13 @@ private:
 	void Operators();
 	void OneOperator();
 	void Operator();
-	void IfBlock(); //+
-	void DoWhileBlock(); //+
-	void WhileBlock(); //+
-	void ReadFunc(); //+
-	void WriteFunc(); //+
-	void BreakOp(); //+
-	void OpExpression(); //+
+	void IfBlock();
+	void DoWhileBlock();
+	void WhileBlock();
+	void ReadFunc();
+	void WriteFunc();
+	void BreakOp();
+	void OpExpression();
 
 	//Expression states
 	void Expression();

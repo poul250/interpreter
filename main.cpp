@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 
 	istream& stream = fromFile ? fstream : cin;
 	Interpretator inter(stream);
-	inter.Inerpretate();
+	inter.Interpretate();
 
 	return 0;
 }

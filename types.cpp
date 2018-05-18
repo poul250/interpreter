@@ -66,15 +66,12 @@ Data::Data(const char* x)
 
 Data::Data(const Data& src)
         : type(src.type) {
-    if (type == LEX_NUM) {
+    if (type == LEX_NUM)
         val.i = src.val.i;
-    } else if (type == LEX_REAL_NUM) {
+    else if (type == LEX_REAL_NUM)
         val.d = src.val.d;
-    } else if (type == LEX_STRING) {
-        // cout << src.val.s << "  ";
+    else if (type == LEX_STRING)
         cpy(src.val.s);
-        // cout << val.s;
-    }
 }
 
 Data::Data(Lex lex)
@@ -97,12 +94,9 @@ LexType Data::compatible(LexType t1, LexType op, LexType t2) {
     case LEX_ASSIGN:
         if (t1 == LEX_STRING && t2 == LEX_STRING)
             return LEX_STRING;
-        else if (t1 == LEX_NUM && t2 != LEX_STRING)
-            return LEX_NUM;
-        else if (t1 == LEX_REAL_NUM && t2 != LEX_STRING)
-            return LEX_REAL_NUM;
-        else
-            throw "incompatible types";
+        else if ((t1 == LEX_NUM || t1 == LEX_REAL_NUM) && t2 != LEX_STRING)
+            return t1;
+        throw "incompatible types";
     case LEX_PLUS:
         if (t1 == LEX_STRING && t2 == LEX_STRING)
             return LEX_STRING;
@@ -110,8 +104,7 @@ LexType Data::compatible(LexType t1, LexType op, LexType t2) {
             return LEX_NUM;
         else if (t1 != LEX_STRING && t2 != LEX_STRING)
             return LEX_REAL_NUM;
-        else
-            throw "incompatible types";
+        throw "incompatible types";
     case LEX_MINUS:
     case LEX_DIV:
     case LEX_MUL:
@@ -119,8 +112,7 @@ LexType Data::compatible(LexType t1, LexType op, LexType t2) {
             return LEX_NUM;
         else if (t1 != LEX_STRING && t2 != LEX_STRING)
             return LEX_REAL_NUM;
-        else
-            throw "incompatible types";
+        throw "incompatible types";
     case LEX_LESS:
     case LEX_GREATER:
     case LEX_EQ:
@@ -129,8 +121,7 @@ LexType Data::compatible(LexType t1, LexType op, LexType t2) {
     case LEX_GE:
         if (int(t1 == LEX_STRING) + int(t2 == LEX_STRING) == 1)
             throw "incompatible types";
-        else
-            return LEX_NUM;
+        return LEX_NUM;
     case LEX_AND:
     case LEX_OR:
         if (t1 != LEX_NUM || t2 != LEX_NUM)
@@ -171,12 +162,6 @@ Data::operator string() const {
     else if (type == LEX_STRING)
         return string(val.s);
 }
-
-// void Data::cpy(const char* src) {
-//     if (src == nullptr) {
-//
-//     }
-// }
 
 Data Data::operator=(const Data& src) {
     switch (type) {

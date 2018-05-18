@@ -6,8 +6,8 @@ namespace Pawka {
 
 Context::Context(map<string, Data>&vars)
         : vars(vars)
-        , commandIndex(0)
-{   }
+        , commandIndex(0) {
+}
 
 void PolizPop::execute(Context& cont) {
     cont.st.pop();
@@ -39,10 +39,8 @@ void PolizExpr::execute(Context& cont) {
     } else {
         Data d1 = cont.st.top();
         cont.st.pop();
-        // cout << d1;
-        if (type == LEX_ASSIGN) {
+        if (type == LEX_ASSIGN)
             cont.st.push(cont.vars[d1] = d2);
-        }
         else if (type == LEX_PLUS)
             cont.st.push(d1 + d2);
         else if (type == LEX_MINUS)
