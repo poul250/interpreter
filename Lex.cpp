@@ -47,7 +47,8 @@ ostream& operator<< (ostream& stream, Lex lex) {
 
 Lex::Lex(const LexType type, string str) : type(type), str(str) { }
 
-void LexAnalizer::init() {
+LexAnalizer::LexAnalizer(istream& stream)
+		: stream(stream) {
 	state = nullptr;
 	line = 1;
 	TW[string("program")] = LEX_PROGRAM;
@@ -66,18 +67,13 @@ void LexAnalizer::init() {
 	TW[string("while"  )] = LEX_WHILE;
 }
 
-LexAnalizer::LexAnalizer(istream& stream)
-		: stream(stream) {
-	init();
-}
-
 LexAnalizer::~LexAnalizer() {  }
 
 bool LexAnalizer::moveNext() {
 	int ch = 0;
-
 	buf.clear();
 	state = &LexAnalizer::FirstSym;
+
 	while ((this->*state)(get())) { }
 
 	return lex.type != LEX_NULL;
@@ -174,23 +170,26 @@ bool LexAnalizer::ComplexOperation(int c) {
 }
 
 bool LexAnalizer::Comment(int c) {
-	if (c == '\n')
+	if (c == '\n') {
 		state = &LexAnalizer::FirstSym;
+		++line;
+	}
 	return true;
 }
 
 bool LexAnalizer::BigComment(int c) {
 	static bool lastStar = false;
-	if (c == '*')
+	if (c == '*') {
 		lastStar = true;
-	else if (c == '\n')
-		++line;
-	else if (c == '/' && lastStar)
-		state = &LexAnalizer::FirstSym;
-	else if (c == EOF)
-		throw "Unexpected end of file";
-	else
+	} else {
 		lastStar = false;
+		if (c == '\n')
+			++line;
+		else if (c == '/' && lastStar)
+			state = &LexAnalizer::FirstSym;
+		else if (c == EOF)
+			throw "Unexpected end of file";
+	}
 	return true;
 }
 
@@ -203,7 +202,6 @@ bool LexAnalizer::ReadId(int c) {
 			makeLex(TW[buf]);
 		else
 			makeLex(LEX_ID);
-
 		unget();
 		return false;
 	}
@@ -226,17 +224,16 @@ bool LexAnalizer::ReadNum(int c) {
 }
 
 bool LexAnalizer::ReadRealNum(int c) {
-	static int num = 0;
+	static bool ok = false;
 	if (isdigit(c)) {
-		++num;
+		ok = true;
 		buf.push_back(c);
 		return true;
 	} else {
-		if (num == 0)
-			throw "unexpected symbol '" + string((char*)(&c)) + "'";
+		if (!ok)
+			throw "unexpected symbol '.'";
 		makeLex(LEX_REAL_NUM);
 		unget();
-		num = 0;
 		return false;
 	}
 }

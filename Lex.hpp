@@ -42,8 +42,6 @@ public:
 private:
 	typedef bool (LexAnalizer::*State) (int c);
 
-	void init();
-
 	bool FirstSym (int c);
 	bool ComplexOperation(int c);
 	bool ReadId (int c);
