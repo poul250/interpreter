@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
 	else if (argc == 2) {
 		fstream.open(argv[1]);
 		fromFile = true;
-		if (!fromFile) {
+		if (!fstream) {
 			cout << "Error: can't open file" << endl;
 			return -1;
 		}
