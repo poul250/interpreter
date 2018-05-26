@@ -199,7 +199,7 @@ Data Data::operator=(const Data& src) {
 }
 
 Data Data::operator+(const Data& src) {
-    LexType t = compatible(type, LEX_ASSIGN, src.type);
+    LexType t = compatible(type, LEX_PLUS, src.type);
     if (t == LEX_STRING)
         return string(*this) + string(src);
     else if (t == LEX_NUM)
