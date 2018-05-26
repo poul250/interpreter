@@ -182,13 +182,13 @@ bool LexAnalizer::BigComment(int c) {
 	if (c == '*') {
 		lastStar = true;
 	} else {
-		lastStar = false;
 		if (c == '\n')
 			++line;
 		else if (c == '/' && lastStar)
 			state = &LexAnalizer::FirstSym;
 		else if (c == EOF)
 			throw "Unexpected end of file";
+		lastStar = false;
 	}
 	return true;
 }
