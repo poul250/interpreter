@@ -12,8 +12,7 @@ int main(int argc, char* argv[])
 	if (argc >= 3) {
 		cout << "Usage: " << argv[0] << " [file_name]" << endl;
 		return -1;
-	}
-	else if (argc == 2) {
+	} else if (argc == 2) {
 		fstream.open(argv[1]);
 		fromFile = true;
 		if (!fstream) {
